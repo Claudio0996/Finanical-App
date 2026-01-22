@@ -10,12 +10,12 @@ const transactionSchema = new Schema(
       type: Number,
       required: true,
     },
-    installments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Installment",
-      },
-    ],
+    // installments: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Installment",
+    //   },
+    // ],
     status: {
       type: String,
       enum: ["active", "finished"],
@@ -32,7 +32,7 @@ const transactionSchema = new Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = model("Transaction", transactionSchema);

@@ -8,5 +8,5 @@ exports.hashPassword = async (password) => {
 };
 
 exports.comparePassword = async (password, passwordHash) => {
-  return await bcrypt.compare("CvS_391_" + pepper, passwordHash);
+  return await bcrypt.compare(password + pepper, passwordHash);
 };
