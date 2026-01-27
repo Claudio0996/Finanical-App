@@ -27,6 +27,7 @@ const accountSchema = new Schema(
     currency: {
       type: String,
       required: true,
+      enum: ["BRL", "USD"],
     },
   },
   { timestamps: true },

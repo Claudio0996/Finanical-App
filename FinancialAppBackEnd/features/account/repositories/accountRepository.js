@@ -6,10 +6,14 @@ exports.createAccount = async ({ name, type, initialBalance, currency, userId, b
   return savedAccount;
 };
 
-exports.findAccount = async (bankId, userId) => {
-  return await Account.findOne({ userId, bankId });
+exports.findById = async (id) => {
+  return await Account.findById(id);
 };
 
-exports.deleteAccount = async (bankId, userId) => {
-  return await Account.findOneAndDelete({ userId, bankId });
+exports.findByUserId = async (userId) => {
+  return await Account.find({ userId });
+};
+
+exports.deleteById = async (id) => {
+  return await Account.findOneAndDelete({ _id: id }, { new: false });
 };
