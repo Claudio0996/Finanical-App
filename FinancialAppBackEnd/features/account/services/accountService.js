@@ -1,8 +1,8 @@
-const Account = require("../repositories/accountRepository");
+const AccountRepository = require("../repositories/accountRepository");
 const ErrorObjects = require("../../../core/errors");
 
 exports.createAccount = async (name, userId, bankId, type, initialBalance, currency) => {
-  const existingAccount = await Account.findByUserId(userId);
+  const existingAccount = await AccountRepository.findByUserId(userId);
 
   if (existingAccount.length > 0) {
     existingAccount.forEach((acc) => {
@@ -12,19 +12,19 @@ exports.createAccount = async (name, userId, bankId, type, initialBalance, curre
     });
   }
 
-  const newAccount = await Account.createAccount(name, type, initialBalance, currency, userId, bankId);
+  const newAccount = await AccountRepository.createAccount(name, type, initialBalance, currency, userId, bankId);
 
   return newAccount;
 };
 
 exports.listAccounts = async (userId) => {
-  const accounts = await Account.findByUserId(userId);
+  const accounts = await AccountRepository.findByUserId(userId);
 
   return accounts;
 };
 
 exports.deleteAccount = async (accountId, userId) => {
-  const account = await Account.findById(accountId);
+  const account = await AccountRepository.findById(accountId);
   const existingAccount = !!account;
 
   if (!existingAccount) {
@@ -35,7 +35,7 @@ exports.deleteAccount = async (accountId, userId) => {
     throw ErrorObjects.authError("Essa conta não pertence ao usuário, portanto não é possível excluir");
   }
 
-  const deletedAccount = await Account.deleteById(accountId);
+  const deletedAccount = await AccountRepository.deleteById(accountId);
 
   return `Conta ${deletedAccount.name} deletada`;
 };

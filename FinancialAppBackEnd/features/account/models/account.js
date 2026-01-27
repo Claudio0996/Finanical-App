@@ -33,6 +33,6 @@ const accountSchema = new Schema(
   { timestamps: true },
 );
 
-accountSchema.index({ bankId, userId }, { unique: true });
+accountSchema.index({ bankId, userId, type }, { unique: true });
 
 module.exports = model("Account", accountSchema);

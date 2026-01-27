@@ -1,7 +1,7 @@
 const Account = require("../models/account");
 
-exports.createAccount = async ({ name, type, initialBalance, currency, userId, bankId }) => {
-  const account = new Account({ userId, name, bankId, type, initialBalance, currency });
+exports.createAccount = async (accountData) => {
+  const account = new Account(accountData);
   const savedAccount = await account.save();
   return savedAccount;
 };
