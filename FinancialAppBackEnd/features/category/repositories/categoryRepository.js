@@ -18,6 +18,10 @@ exports.findByIndex = async (indexObject) => {
   return await Category.findOne(indexObject);
 };
 
+exports.updateCategory = async (id, newData) => {
+  return await Category.findOneAndUpdate({ _id: id }, newData, { new: true });
+};
+
 exports.deleteById = async (id) => {
   return await Category.findOneAndDelete({ _id: id }, { new: false });
 };

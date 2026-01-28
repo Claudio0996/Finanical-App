@@ -1,41 +1,71 @@
-const AccountRepository = require("../repositories/accountRepository");
+const Account = require("../repositories/accountRepository");
 const ErrorObjects = require("../../../core/errors");
 
-exports.createAccount = async (name, userId, bankId, type, initialBalance, currency) => {
-  const existingAccount = await AccountRepository.findByUserId(userId);
+//Função para criar nova conta bancária
+exports.createAccount = async (accountData, userId) => {
+  const existingAccount = await Account.findByIndex({
+    bankId: accountData.bankId,
+    type: accountData.type,
+    userId,
+  });
 
-  if (existingAccount.length > 0) {
-    existingAccount.forEach((acc) => {
-      if (acc.bankId.toString() === bankId) {
-        throw ErrorObjects.conflictError("Uma conta neste banco já existe para este usuário");
-      }
-    });
+  if (existingAccount) {
+    throw ErrorObjects.conflictError("Conta já existe");
   }
 
-  const newAccount = await AccountRepository.createAccount(name, type, initialBalance, currency, userId, bankId);
+  const newAccount = await Account.createAccount(accountData);
 
   return newAccount;
 };
 
-exports.listAccounts = async (userId) => {
-  const accounts = await AccountRepository.findByUserId(userId);
-
-  return accounts;
-};
-
-exports.deleteAccount = async (accountId, userId) => {
-  const account = await AccountRepository.findById(accountId);
-  const existingAccount = !!account;
+//Função para atualizar uma conta
+exports.updateAccount = async (accountData, id, userId) => {
+  const existingAccount = await Account.findById(id);
 
   if (!existingAccount) {
-    throw ErrorObjects.notFoundError("Esta conta não existe");
+    throw ErrorObjects.notFoundError("Conta não encontrada");
   }
 
-  if (account.userId.toString() !== userId) {
-    throw ErrorObjects.authError("Essa conta não pertence ao usuário, portanto não é possível excluir");
+  if (existingAccount.userId.toString() !== userId) {
+    throw ErrorObjects.authError("Esta conta não pertence ao seu usuário");
   }
 
-  const deletedAccount = await AccountRepository.deleteById(accountId);
+  return await Account.updateAccount(id, accountData);
+};
 
-  return `Conta ${deletedAccount.name} deletada`;
+//Função para Excluir uma conta de um usuário
+exports.deleteAccount = async (id, userId) => {
+  const existingAccount = await Account.findById(id);
+
+  if (!existingAccount) {
+    throw ErrorObjects.notFoundError("Conta não encontrada");
+  }
+
+  if (existingAccount.userId.toString() !== userId) {
+    throw ErrorObjects.authError("Esta conta não pertence ao seu usuário");
+  }
+
+  return await Account.deleteById(id);
+};
+
+//Função para pegar apenas uma conta por usuário
+exports.getAccount = async (id, userId) => {
+  const existingAccount = await Account.findById(id);
+
+  if (!existingAccount) {
+    throw ErrorObjects.notFoundError("Conta não encontrada");
+  }
+
+  if (existingAccount.userId.toString() !== userId) {
+    throw ErrorObjects.authError("Essra conta não pertence ao usuário");
+  }
+
+  return existingAccount;
+};
+
+//Função para trazer todas as contas de um usuário
+exports.getAccounts = async (userId) => {
+  const accounts = await Account.findByUserId(userId);
+
+  return accounts;
 };
