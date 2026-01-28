@@ -1,8 +1,8 @@
 const Transaction = require("../models/transaction");
 
 //Função para criar uma transação
-exports.createSingleTransaction = async (transacitionData) => {
-  const transaction = await Transaction.create(transacitionData);
+exports.createSingleTransaction = async (transactionData) => {
+  const transaction = await Transaction.create(transactionData);
 
   return transaction;
 };
@@ -17,3 +17,10 @@ exports.createManyTransactions = async (transactionsList) => {
 exports.findById = async (id) => {
   return await Transaction.findById(id);
 };
+
+//Função para buscar todas as transações de um usuário
+exports.findByUserId = async (userId) => {
+  return await Transaction.find({ userId });
+};
+
+exports.findByUserIdAndDate = async (userId, startDate, endDate) => {};
