@@ -23,4 +23,17 @@ exports.findByUserId = async (userId) => {
   return await Transaction.find({ userId });
 };
 
-exports.findByUserIdAndDate = async (userId, startDate, endDate) => {};
+//Função para buscar por data
+exports.findByPeriod = async ({ userId, initialDate, finalDate }) => {
+  return await Transaction.find({ userId, date: { $gte: initialDate, $lte: finalDate } });
+};
+
+//Função para atualizar uma transação
+exports.updateTransaction = async (id, newData) => {
+  return await Transaction.findOneAndUpdate({ _id: id }, newData, { new: true });
+};
+
+//Função para excluir uma transação
+exports.deleteById = async (id) => {
+  return await Transaction.findOneAndDelete({ _id: id });
+};
