@@ -6,7 +6,6 @@ const CategoryService = require("../../category/services/categoryService");
 const ErrorObjects = require("../../../core/errors");
 
 const { getInstallmentDate } = require("../../../util/dateFunctions");
-const { create } = require("../../category/model/category");
 
 //Função para criar transação única
 exports.createSingleTransaction = async (transactionData, userId) => {

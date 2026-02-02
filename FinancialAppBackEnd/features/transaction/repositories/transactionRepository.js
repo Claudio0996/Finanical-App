@@ -24,8 +24,18 @@ exports.findByUserId = async (userId) => {
 };
 
 //Função para buscar por data
-exports.findByPeriod = async ({ userId, initialDate, finalDate }) => {
-  return await Transaction.find({ userId, date: { $gte: initialDate, $lte: finalDate } });
+exports.findByPeriod = async ({ userId, accountId, initialDate, finalDate }) => {
+  return await Transaction.find({ userId, date: { $gte: initialDate, $lte: finalDate }, accountId });
+};
+
+//Função para buscar até uma data
+exports.findUntilPeriod = async ({ userId, accountId, date }) => {
+  return await Transaction.find({ userId, date: { $lte: date }, accountId });
+};
+
+//Função para buscar por conta
+exports.findByUserIdAndAccountId = async (userId, accountId) => {
+  return await Transaction.find({ userId, accountId });
 };
 
 //Função para atualizar uma transação
