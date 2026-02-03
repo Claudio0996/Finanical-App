@@ -18,24 +18,31 @@ exports.findById = async (id) => {
   return await Transaction.findById(id);
 };
 
-//Função para buscar todas as transações de um usuário
-exports.findByUserId = async (userId) => {
-  return await Transaction.find({ userId });
-};
+//Função para buscar transações por query dinâmica
+exports.findTransactions = async (userId, filters) => {
+  const query = { userId };
 
-//Função para buscar por data
-exports.findByPeriod = async ({ userId, accountId, initialDate, finalDate }) => {
-  return await Transaction.find({ userId, date: { $gte: initialDate, $lte: finalDate }, accountId });
-};
+  if (filters.accountId) {
+    query.accountId = filters.accountId;
+  }
 
-//Função para buscar até uma data
-exports.findUntilPeriod = async ({ userId, accountId, date }) => {
-  return await Transaction.find({ userId, date: { $lte: date }, accountId });
-};
+  if (filters.initialDate && filters.finalDate) {
+    query.date = { $gte: filters.initialDate, $lte: filters.finalDate };
+  }
 
-//Função para buscar por conta
-exports.findByUserIdAndAccountId = async (userId, accountId) => {
-  return await Transaction.find({ userId, accountId });
+  if (filters.finalDate && !filters.initialDate) {
+    query.date = { $lte: filters.finalDate };
+  }
+
+  if (filters.categoryId) {
+    query.categoryId = filters.categoryId;
+  }
+
+  if (filters.type) {
+    query.type = filters.type;
+  }
+
+  return await Transaction.find(query).sort({ date: -1 });
 };
 
 //Função para atualizar uma transação

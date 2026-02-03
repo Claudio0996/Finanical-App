@@ -58,3 +58,59 @@ exports.createMultipleTransaction = async (transactionData, userId) => {
 
   return createdTransactions;
 };
+
+//Função que retorna todas as transações de um usuário
+exports.getTransactions = async (filters, userId) => {
+  if (filters.accountId) {
+    await AccountService.getAccount(filters.accountId, userId);
+  }
+
+  const transactionList = await TransactionRepository.find({
+    ...filters,
+    userId,
+  });
+
+  return transactionList;
+};
+
+//Função para atualizar uma transação
+exports.updateTransaction = async (id, data, userId) => {
+  const transaction = await TransactionRepository.findById(id);
+
+  if (!transaction) {
+    throw ErrorObjects.notFoundError("Transação não encontrada");
+  }
+
+  if (transaction.userId.toString() !== userId) {
+    throw ErrorObjects.authError("Essa transação não pertence ao usuário");
+  }
+
+  if (data.type !== transaction.type) {
+    throw ErrorObjects.conflictError("Transações não são do mesmo tipo");
+  }
+
+  if (data.accountId !== transaction.accountId.toString()) {
+    await AccountService.getAccount(data.accountId, userId);
+  }
+
+  if (data.categoryId !== transaction.categoryId.toString()) {
+    await CategoryService.getCategory(data.categoryId, userId);
+  }
+
+  return await TransactionRepository.updateTransaction(id, data);
+};
+
+//Função para excluir uma transação
+exports.deleteTransaction = async (id, userId) => {
+  const transaction = await TransactionRepository.findById(id);
+
+  if (!transaction) {
+    throw ErrorObjects.notFoundError("Transação não existe");
+  }
+
+  if (transaction.userId.toString() !== userId) {
+    throw ErrorObjects.authError("Esta transação não pertence ao usuário");
+  }
+
+  return await TransactionRepository.deleteById(id);
+};
