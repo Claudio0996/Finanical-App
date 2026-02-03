@@ -4,8 +4,7 @@ const ErrorObjects = require("../../../core/errors");
 //Função para criar nova categoria
 exports.createCategory = async (categoryData, userId) => {
   const existingCategory = await Category.findByIndex({
-    name: categoryData.name,
-    type: categoryData.type,
+    ...categoryData,
     userId,
   });
 
