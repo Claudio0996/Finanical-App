@@ -11,8 +11,11 @@ exports.createCategory = async (categoryData, userId) => {
   if (existingCategory) {
     throw ErrorObjects.conflictError("Categoria já existe");
   }
-
-  const newCategory = await Category.createCategory(categoryData);
+  const categoryObject = {
+    ...categoryData,
+    userId,
+  };
+  const newCategory = await Category.createCategory(categoryObject);
 
   return newCategory;
 };

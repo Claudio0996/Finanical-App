@@ -3,6 +3,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const authRoutes = require("./features/auth/routes/authRoutes");
+const categoryRoutes = require("./features/category/routes/categoryRoutes");
 
 const app = express();
 
@@ -14,9 +15,11 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-  })
+  }),
 );
 
 app.use(authRoutes);
+
+app.use(categoryRoutes);
 
 module.exports = { app };

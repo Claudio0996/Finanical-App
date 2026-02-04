@@ -1,6 +1,6 @@
 const AccessTokenService = require("../features/auth/service/accessTokenService");
 
-const setUserId = (req, res, next) => {
+const setUserId = async (req, res, next) => {
   try {
     if (!req.headers.authorization) {
       throw new Error("Token não encontrado");
@@ -16,7 +16,7 @@ const setUserId = (req, res, next) => {
       throw new Error("Token não existe");
     }
 
-    const userId = AccessTokenService.verifyAccessToken(token).id;
+    const userId = await AccessTokenService.verifyAccessToken(token).id;
 
     req.userId = userId;
     next();
@@ -29,3 +29,5 @@ const setUserId = (req, res, next) => {
     });
   }
 };
+
+module.exports = { setUserId };

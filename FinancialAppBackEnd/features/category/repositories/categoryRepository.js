@@ -1,3 +1,4 @@
+const category = require("../model/category");
 const Category = require("../model/category");
 
 exports.createCategory = async (categoryData) => {

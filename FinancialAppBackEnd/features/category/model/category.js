@@ -24,6 +24,6 @@ const categorySchema = new Schema(
   { timestamps: true },
 );
 
-categorySchema.index({ userId, type, name }, { unique: true });
+categorySchema.index({ userId: 1, type: 1, name: 1 }, { unique: true });
 
 module.exports = model("Category", categorySchema);
