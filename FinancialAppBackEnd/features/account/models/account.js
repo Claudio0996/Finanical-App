@@ -18,7 +18,7 @@ const accountSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: ["checking", "savings", "wallet"],
+      enum: ["poupança", "corrente", "investimento"],
     },
     initialBalance: {
       type: Number,
@@ -33,6 +33,6 @@ const accountSchema = new Schema(
   { timestamps: true },
 );
 
-accountSchema.index({ bankId, userId, type }, { unique: true });
+accountSchema.index({ bankId: 1, userId: 1, type: 1 }, { unique: true });
 
 module.exports = model("Account", accountSchema);

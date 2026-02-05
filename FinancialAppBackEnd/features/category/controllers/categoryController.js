@@ -6,7 +6,7 @@ exports.createCategory = async (req, res, next) => {
   const userId = req.userId;
 
   try {
-    const newCategory = await CategoryService.createCategory(categoryData, userId);
+    const newCategory = await CategoryService.createCategory(userId, categoryData);
 
     return res.status(201).json({
       success: true,
@@ -100,7 +100,7 @@ exports.deleteCategory = async (req, res, next) => {
   try {
     const deletedCategory = await CategoryService.deleteCategory(categoryId, userId);
 
-    res.status(204).json({
+    res.status(200).json({
       success: true,
       message: "Categoria deletada com sucesso",
       data: { category: deletedCategory },

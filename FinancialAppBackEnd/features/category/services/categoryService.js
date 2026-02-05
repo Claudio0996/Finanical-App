@@ -2,11 +2,10 @@ const Category = require("../repositories/categoryRepository");
 const ErrorObjects = require("../../../core/errors");
 
 //Função para criar nova categoria
-exports.createCategory = async (categoryData, userId) => {
-  const existingCategory = await Category.findByIndex({
-    ...categoryData,
-    userId,
-  });
+exports.createCategory = async (userId, categoryData) => {
+  const existingCategory = await Category.findByIndex({ userId, type: categoryData.type, name: categoryData.name });
+
+  console.log(existingCategory);
 
   if (existingCategory) {
     throw ErrorObjects.conflictError("Categoria já existe");
@@ -69,7 +68,7 @@ exports.getCategory = async (id, userId) => {
 
 //Função para retornar todas as categorias de um usuário
 exports.getCategories = async (userId) => {
-  const existingCategory = await Category.findByUserId(userId);
+  const existingCategory = await Category.findCategory(userId);
 
   return existingCategory;
 };

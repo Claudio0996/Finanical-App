@@ -2,18 +2,19 @@ const Account = require("../repositories/accountRepository");
 const ErrorObjects = require("../../../core/errors");
 
 //Função para criar nova conta bancária
-exports.createAccount = async (accountData, userId) => {
-  const existingAccount = await Account.findByIndex({
-    bankId: accountData.bankId,
-    type: accountData.type,
-    userId,
-  });
+exports.createAccount = async (userId, accountData) => {
+  const existingAccount = await Account.findByIndex({ bankId: accountData.bankId, userId, type: accountData.type });
 
   if (existingAccount) {
     throw ErrorObjects.conflictError("Conta já existe");
   }
 
-  const newAccount = await Account.createAccount(accountData);
+  const accountObject = {
+    userId,
+    ...accountData,
+  };
+
+  const newAccount = await Account.createAccount(accountObject);
 
   return newAccount;
 };
@@ -65,7 +66,7 @@ exports.getAccount = async (id, userId) => {
 
 //Função para trazer todas as contas de um usuário
 exports.getAccounts = async (userId) => {
-  const accounts = await Account.findByUserId(userId);
+  const accounts = await Account.findAccount(userId);
 
   return accounts;
 };

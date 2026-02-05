@@ -10,9 +10,9 @@ router.get("/categories/:id", setUserId, CategoryController.getCategory);
 
 router.get("/categories/", setUserId, CategoryController.getCategories);
 
-router.post("/categories", setUserId, validate(CategorySchema), CategoryController.createCategory);
+router.post("/categories", validate(CategorySchema), setUserId, CategoryController.createCategory);
 
-router.put("/categories/:id", setUserId, validate(CategorySchema), CategoryController.updateCategory);
+router.put("/categories/:id", validate(CategorySchema), setUserId, CategoryController.updateCategory);
 
 router.delete("/categories/:id", setUserId, CategoryController.deleteCategory);
 
