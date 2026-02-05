@@ -8,7 +8,7 @@ const ErrorObjects = require("../../../core/errors");
 const { getInstallmentDate } = require("../../../util/dateFunctions");
 
 //Função para criar transação única
-exports.createSingleTransaction = async (transactionData, userId) => {
+exports.createSingleTransaction = async (userId, transactionData) => {
   await AccountService.getAccount(transactionData.accountId, userId);
 
   const category = await CategoryService.getCategory(transactionData.categoryId, userId);
@@ -26,7 +26,7 @@ exports.createSingleTransaction = async (transactionData, userId) => {
 };
 
 //Função para criar transação parcelada
-exports.createMultipleTransaction = async (transactionData, userId) => {
+exports.createMultipleTransaction = async (userId, transactionData) => {
   const transactions = [];
   await AccountService.getAccount(transactionData.accountId, userId);
 
@@ -60,7 +60,7 @@ exports.createMultipleTransaction = async (transactionData, userId) => {
 };
 
 //Função que retorna todas as transações de um usuário
-exports.getTransactions = async (filters, userId) => {
+exports.getTransactions = async (userId, filters) => {
   if (filters.accountId) {
     await AccountService.getAccount(filters.accountId, userId);
   }
