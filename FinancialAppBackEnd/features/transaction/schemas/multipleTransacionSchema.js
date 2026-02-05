@@ -7,6 +7,7 @@ const multipleTransactionSchema = zod.object({
   firstDate: zod.coerce.date(),
   accountId: zod.coerce.string(),
   categoryId: zod.coerce.string(),
+  type: zod.enum(["receita", "despesa"]),
 });
 
 module.exports = { multipleTransactionSchema };
