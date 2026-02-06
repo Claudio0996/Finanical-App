@@ -100,7 +100,7 @@ exports.deleteTransaction = async (req, res, next) => {
   const userId = req.userId;
 
   try {
-    const transactionDeleted = await TransactionService.deleteTransactions(categoryId, userId);
+    const transactionDeleted = await TransactionService.deleteTransaction(transactionId, userId);
 
     res.status(200).json({
       success: true,

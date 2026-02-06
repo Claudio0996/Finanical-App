@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const authRoutes = require("./features/auth/routes/authRoutes");
 const categoryRoutes = require("./features/category/routes/categoryRoutes");
 const accountRoutes = require("./features/account/routes/accountRoutes");
+const transactionsRoutes = require("./features/transaction/routes/transactionRoutes");
 
 const app = express();
 
@@ -22,5 +23,6 @@ app.use(
 app.use(authRoutes);
 app.use(categoryRoutes);
 app.use(accountRoutes);
+app.use(transactionsRoutes);
 
 module.exports = { app };

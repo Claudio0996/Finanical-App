@@ -37,11 +37,11 @@ exports.createMultipleTransaction = async (userId, transactionData) => {
   }
 
   //Criar uma função futura para ajustar calculo das parcelas
-  const value = Number.parseFloat((transactionData.amount / transactionData.totalInstallments).toFixed(2));
+  const value = Number.parseFloat((transactionData.amount / transactionData.installments).toFixed(2));
 
   const installmentGroupId = uuid.v4();
 
-  for (let i = 0; i < transactionData.totalInstallments; i++) {
+  for (let i = 0; i < transactionData.installments; i++) {
     const transaction = {
       ...transactionData,
       installmentNumber: i + 1,
@@ -50,9 +50,10 @@ exports.createMultipleTransaction = async (userId, transactionData) => {
       installmentGroupId,
       userId,
     };
-
+    console.log(transaction);
     transactions.push(transaction);
   }
+  console.log(transactions);
 
   const createdTransactions = await TransactionRepository.createManyTransactions(transactions);
 
