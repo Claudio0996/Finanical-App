@@ -161,38 +161,55 @@ npm run dev
 
 O aplicativo estará disponível em `http://localhost:5173` (porta padrão do Vite)
 
-## ✨ Funcionalidades
+## ✨ Funcionalidades (MVP Finalizado)
 
 ### Autenticação
-- ✅ Registro de novos usuários
-- ✅ Login com validação
-- ✅ Refresh token automático
-- ✅ Rotas protegidas
-- ✅ Gerenciamento de sessão
+- ✅ Registro de novos usuários com validação completa
+- ✅ Login com validação de credenciais
+- ✅ Refresh token automático via cookie HTTP-only
+- ✅ Rotas protegidas com middleware de autenticação JWT
+- ✅ Gerenciamento de sessão persistente
+- ✅ Revalidação automática de sessão ao iniciar aplicação
 
-### Contas
-- ✅ Cadastro de contas financeiras atreladas ao usuário
+### Contas Financeiras
+- ✅ Cadastro de contas financeiras (corrente, poupança, investimento)
+- ✅ Suporte para múltiplas moedas (BRL, USD)
 - ✅ Listagem de todas as contas do usuário autenticado
+- ✅ Busca de conta específica por ID
 - ✅ Edição e exclusão de contas com validação de propriedade
+- ✅ Validação de unicidade (mesma conta não pode ser duplicada)
 
 ### Categorias
 - ✅ Cadastro de categorias de receita e despesa
+- ✅ Personalização de cores para identificação visual
 - ✅ Edição, listagem e exclusão de categorias por usuário
 - ✅ Validação de tipo (categoria compatível com tipo de transação)
+- ✅ Validação de unicidade por usuário
 
 ### Transações
-- ✅ Criação de transações únicas
+- ✅ Criação de transações únicas (receita ou despesa)
 - ✅ Criação de transações parceladas com cálculo automático de parcelas
+- ✅ Cálculo automático de valores e datas das parcelas
+- ✅ Agrupamento de transações parceladas por grupo
+- ✅ Listagem de transações com filtros avançados:
+  - Por conta (`accountId`)
+  - Por período (`initialDate`, `finalDate`)
+  - Por categoria (`categoryId`)
+  - Por tipo (`type`: receita/despesa)
 - ✅ Edição e exclusão de transações apenas do usuário dono
-- ✅ Filtro por conta e outros parâmetros (no backend)
+- ✅ Validação de consistência entre tipo de transação e categoria
 
 ### Saldos
 - ✅ Cálculo de saldo total por conta com base nas transações
-- ✅ Cálculo de saldo em períodos específicos (backend preparado para uso no dashboard)
+- ✅ Cálculo de saldo em períodos específicos
+- ✅ Cálculo de saldo até uma data específica
+- ✅ Integração completa com sistema de transações
+- ✅ API pronta para consumo no dashboard
 
 ### Dashboard
-- 📊 Visualização de estado autenticado do usuário
-- 📈 Base pronta para gráficos, listas de contas, categorias e transações
+- ✅ Visualização de estado autenticado do usuário
+- ✅ Estrutura pronta para integração com APIs de contas, categorias, transações e saldos
+- ✅ Base para implementação de gráficos e relatórios financeiros
 
 ### Segurança
 - 🔐 Hash de senhas com bcrypt
@@ -234,42 +251,106 @@ O aplicativo estará disponível em `http://localhost:5173` (porta padrão do Vi
 
 ## 🧩 Domínios Funcionais
 
+### Backend - API REST Completa
+
 - **Autenticação (`features/auth`)**
-  - Rotas de login, registro e refresh.
-  - Serviços para geração e verificação de tokens de acesso.
-  - Integração com refresh tokens e cookies HTTP-only.
+  - `POST /register` - Registro de novos usuários
+  - `POST /login` - Login com email e senha
+  - `POST /refresh` - Revalidação de sessão via refresh token
+  - Serviços para geração e verificação de tokens de acesso
+  - Integração com refresh tokens e cookies HTTP-only
 
 - **Usuário (`features/user`)**
-  - Criação, busca e manipulação de dados de usuário.
+  - Criação, busca e manipulação de dados de usuário
+  - Validação de email único
+  - Validação de senha forte
 
 - **Contas (`features/account`)**
-  - CRUD completo de contas financeiras.
-  - Validação para garantir que cada conta pertence ao usuário autenticado.
+  - `GET /accounts` - Lista todas as contas do usuário
+  - `GET /accounts/:id` - Busca conta específica
+  - `POST /accounts` - Cria nova conta financeira
+  - `PUT /accounts/:id` - Atualiza conta existente
+  - `DELETE /accounts/:id` - Remove conta
+  - Validação para garantir que cada conta pertence ao usuário autenticado
+  - Suporte para tipos: corrente, poupança, investimento
+  - Suporte para moedas: BRL, USD
 
 - **Categorias (`features/category`)**
-  - CRUD de categorias de receita/despesa.
-  - Verificações para garantir coerência do tipo de categoria com o tipo de transação.
+  - `GET /categories` - Lista todas as categorias do usuário
+  - `GET /categories/:id` - Busca categoria específica
+  - `POST /categories` - Cria nova categoria
+  - `PUT /categories/:id` - Atualiza categoria existente
+  - `DELETE /categories/:id` - Remove categoria
+  - CRUD completo de categorias de receita/despesa
+  - Verificações para garantir coerência do tipo de categoria com o tipo de transação
+  - Personalização de cores
 
 - **Transações (`features/transaction`)**
-  - Criação de transações únicas e parceladas.
-  - Atualização, listagem e exclusão de transações do usuário.
-  - Integração com contas e categorias.
+  - `POST /transactions` - Cria transação única
+  - `POST /transactions/installments` - Cria transações parceladas
+  - `GET /transactions` - Lista transações com filtros (conta, período, categoria, tipo)
+  - `PUT /transactions/:id` - Atualiza transação existente
+  - `DELETE /transactions/:id` - Remove transação
+  - Criação de transações únicas e parceladas
+  - Cálculo automático de parcelas (valores e datas)
+  - Agrupamento de transações parceladas
+  - Atualização, listagem e exclusão de transações do usuário
+  - Integração completa com contas e categorias
 
 - **Saldo (`features/balance`)**
-  - Cálculo de saldo total por conta.
-  - Cálculo de saldo por período ou até uma data.
+  - `GET /balance` - Calcula saldo com filtros (conta, período)
+  - Cálculo de saldo total por conta
+  - Cálculo de saldo por período específico
+  - Cálculo de saldo até uma data específica
+  - Integração completa com sistema de transações
 
 - **Tokens (`features/token`)**
-  - Geração, rotação, revogação e persistência de refresh tokens.
+  - Geração, rotação, revogação e persistência de refresh tokens
+  - Rotação automática de tokens para segurança
 
 - **Segurança (`features/security`)**
-  - Serviços de hash e comparação de senha.
+  - Serviços de hash e comparação de senha com bcrypt
+  - Suporte para pepper opcional
+
+## 🔌 API Endpoints
+
+### Autenticação
+- `POST /register` - Registro de usuário
+- `POST /login` - Login de usuário
+- `POST /refresh` - Revalidação de sessão
+
+### Contas
+- `GET /accounts` - Lista todas as contas do usuário
+- `GET /accounts/:id` - Busca conta específica
+- `POST /accounts` - Cria nova conta
+- `PUT /accounts/:id` - Atualiza conta
+- `DELETE /accounts/:id` - Remove conta
+
+### Categorias
+- `GET /categories` - Lista todas as categorias do usuário
+- `GET /categories/:id` - Busca categoria específica
+- `POST /categories` - Cria nova categoria
+- `PUT /categories/:id` - Atualiza categoria
+- `DELETE /categories/:id` - Remove categoria
+
+### Transações
+- `POST /transactions` - Cria transação única
+- `POST /transactions/installments` - Cria transações parceladas
+- `GET /transactions` - Lista transações (suporta filtros: `accountId`, `categoryId`, `type`, `initialDate`, `finalDate`)
+- `PUT /transactions/:id` - Atualiza transação
+- `DELETE /transactions/:id` - Remove transação
+
+### Saldo
+- `GET /balance` - Calcula saldo (suporta filtros: `accountId`, `initialDate`, `finalDate`)
+
+**Nota:** Todas as rotas (exceto `/register`, `/login` e `/refresh`) requerem autenticação via header `Authorization: Bearer <token>`.
 
 ## 📚 Documentação Completa
 
-Para uma visão mais detalhada da arquitetura, fluxos e regras de negócio (separando frontend e backend), consulte o arquivo:
+Para uma visão mais detalhada da arquitetura, fluxos e regras de negócio (separando frontend e backend), consulte os arquivos:
 
-- **`DOCUMENTACAO_PROJETO.md`** – documentação técnica completa do projeto.
+- **`DOCUMENTACAO_PROJETO.md`** – documentação técnica completa do projeto
+- **`REQUISITOS_E_REGRAS_DE_NEGOCIO.md`** – requisitos funcionais e regras de negócio do backend
 
 ## 🧪 Scripts Disponíveis
 

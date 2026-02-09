@@ -22,6 +22,8 @@ Documento gerado com base na estrutura atual do **backend** do sistema. Contém 
 | RF10 | O sistema deve permitir listar transações do usuário (com filtros opcionais por conta, período, categoria, tipo). | Transação |
 | RF11 | O sistema deve permitir editar e excluir transações do usuário. | Transação |
 | RF12 | O sistema deve calcular o saldo de uma conta (total ou em período determinado) com base no saldo inicial e nas transações. | Saldo |
+| RF13 | O sistema deve expor todas as funcionalidades através de API REST com rotas padronizadas. | Sistema |
+| RF14 | O sistema deve validar propriedade de recursos (contas, categorias, transações) garantindo que apenas o dono possa acessar/modificar seus dados. | Sistema |
 
 ### 1.2. Requisitos Não Funcionais
 
@@ -89,10 +91,10 @@ Documento gerado com base na estrutura atual do **backend** do sistema. Contém 
 | ID | Regra | Onde se aplica |
 |----|--------|------------------|
 | RN27 | **Cálculo do saldo:** O saldo é o saldo inicial da conta mais a soma algébrica das transações: transações do tipo receita somam; transações do tipo despesa subtraem. | `balanceService.calculateBalance` |
-| RN28 | **Saldo por conta:** O saldo é sempre calculado para uma conta específica, que deve pertencer ao usuário autenticado. | `balanceService` (getAccountBalance, getAccountBalanceByPeriod, getAccountBalaceUntilPeriod) |
-| RN29 | **Saldo em período:** O sistema suporta cálculo de saldo considerando apenas transações em um intervalo de datas ou até uma data. | `balanceService.getAccountBalanceByPeriod` e `getAccountBalaceUntilPeriod` |
+| RN28 | **Saldo por conta:** O saldo é sempre calculado para uma conta específica (filtro `accountId` obrigatório), que deve pertencer ao usuário autenticado. | `balanceService.getBalance` |
+| RN29 | **Saldo em período:** O sistema suporta cálculo de saldo considerando apenas transações em um intervalo de datas (`initialDate` e `finalDate`) ou até uma data específica (`initialDate`). | `balanceService.getBalance` com filtros de data |
 
-*Nota:* No código do `balanceService`, o tipo é tratado como `"income"` para soma; no restante do sistema o tipo é `"receita"`/`"despesa"`. Para consistência, a regra de negócio é: receita soma, despesa subtrai.
+*Nota:* No código do `balanceService`, o tipo é tratado como `"receita"` para soma e `"despesa"` para subtração, mantendo consistência com o restante do sistema. A regra de negócio é: receita soma, despesa subtrai.
 
 ### 2.6. Tokens e Segurança
 
@@ -108,16 +110,16 @@ Documento gerado com base na estrutura atual do **backend** do sistema. Contém 
 
 ## 3. Resumo da Estrutura do Backend (Referência)
 
-- **Auth:** registro, login, refresh; emissão de access token + refresh token em cookie.
+- **Auth:** registro (`POST /register`), login (`POST /login`), refresh (`POST /refresh`); emissão de access token + refresh token em cookie.
 - **User:** criação e busca por e-mail/ID; validação de e-mail único e senha forte.
-- **Account:** CRUD de contas; unicidade (bankId + userId + type); propriedade por usuário.
-- **Category:** CRUD de categorias; unicidade (userId + type + name); propriedade por usuário.
-- **Transaction:** transações únicas e parceladas; validação de conta/categoria e tipo; propriedade por usuário.
-- **Balance:** cálculo de saldo por conta (total, por período ou até data).
+- **Account:** CRUD completo (`GET /accounts`, `GET /accounts/:id`, `POST /accounts`, `PUT /accounts/:id`, `DELETE /accounts/:id`); unicidade (bankId + userId + type); propriedade por usuário.
+- **Category:** CRUD completo (`GET /categories`, `GET /categories/:id`, `POST /categories`, `PUT /categories/:id`, `DELETE /categories/:id`); unicidade (userId + type + name); propriedade por usuário.
+- **Transaction:** CRUD completo (`POST /transactions`, `POST /transactions/installments`, `GET /transactions`, `PUT /transactions/:id`, `DELETE /transactions/:id`); transações únicas e parceladas; validação de conta/categoria e tipo; propriedade por usuário; filtros avançados (conta, período, categoria, tipo).
+- **Balance:** cálculo de saldo (`GET /balance`); suporta filtros por conta (obrigatório), período inicial e final; cálculo de saldo total ou por período.
 - **Token:** geração, rotação, revogação e persistência de refresh tokens.
 - **Security:** hash e comparação de senhas (bcrypt + pepper opcional).
 
-Rotas expostas no `app.js` atualmente: **auth**, **category**, **account**. Os domínios de **transaction** e **balance** possuem regras de negócio implementadas nos serviços e podem ser expostos via novos controllers/rotas quando necessário.
+Rotas expostas no `app.js`: **auth**, **category**, **account**, **transaction**, **balance**. Todos os domínios estão completamente implementados com rotas, controllers, services e repositories funcionais.
 
 ---
 

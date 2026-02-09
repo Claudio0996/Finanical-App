@@ -246,9 +246,11 @@ O objetivo é permitir que o usuário:
       - `cookieParser()`
       - `cors` com origem `http://localhost:5173` e `credentials: true`.
     - Registra rotas:
-      - `authRoutes`
-      - `categoryRoutes`
-      - `accountRoutes`
+      - `authRoutes` - Autenticação (register, login, refresh)
+      - `categoryRoutes` - Categorias (CRUD completo)
+      - `accountRoutes` - Contas financeiras (CRUD completo)
+      - `transactionsRoutes` - Transações (CRUD completo + parceladas)
+      - `balanceRoutes` - Cálculo de saldos
   - `index.js`:
     - Carrega `.env`, cria app e chama `startServer(app)`.
   - `server.js`:
@@ -471,6 +473,61 @@ Cada método retorna sempre um JSON com `{ success, message, data }` e trata err
 
 ### 5.7. Domínio: Transações e Parcelas (`features/transaction`)
 
+**Rotas: `features/transaction/routes/transactionRoutes.js`**
+
+- `POST /transactions`
+  - Middlewares:
+    - `validate(singleTransactionSchema)` – valida payload de transação única.
+    - `setUserId` – autenticação obrigatória.
+  - Controller: `createSingleTransaction`.
+
+- `POST /transactions/installments`
+  - Middlewares:
+    - `validate(multipleTransactionSchema)` – valida payload de transação parcelada.
+    - `setUserId` – autenticação obrigatória.
+  - Controller: `createMultipleTransactions`.
+
+- `GET /transactions`
+  - Middlewares:
+    - `setUserId` – autenticação obrigatória.
+  - Controller: `getTransactions`.
+  - Suporta query parameters para filtros: `accountId`, `categoryId`, `type`, `initialDate`, `finalDate`.
+
+- `PUT /transactions/:id`
+  - Middlewares:
+    - `setUserId` – autenticação obrigatória.
+    - `validate(singleTransactionSchema)` – valida payload de atualização.
+  - Controller: `updateTransaction`.
+
+- `DELETE /transactions/:id`
+  - Middlewares:
+    - `setUserId` – autenticação obrigatória.
+  - Controller: `deleteTransaction`.
+
+**Controller: `features/transaction/controllers/transactionController.js`**
+
+- `createSingleTransaction(userId, transactionData)`:
+  - Encaminha para `TransactionService.createSingleTransaction`.
+  - Retorna `201` com a transação criada.
+
+- `createMultipleTransactions(userId, transactionData)`:
+  - Encaminha para `TransactionService.createMultipleTransaction`.
+  - Retorna `201` com array de transações criadas (parcelas).
+
+- `getTransactions(userId, filters)`:
+  - Encaminha para `TransactionService.getTransaction` com filtros da query string.
+  - Retorna `200` com lista de transações.
+
+- `updateTransaction(transactionId, userId, updatedData)`:
+  - Encaminha para `TransactionService.updateTransaction`.
+  - Retorna `200` com transação atualizada.
+
+- `deleteTransaction(transactionId, userId)`:
+  - Encaminha para `TransactionService.deleteTransaction`.
+  - Retorna `200` com transação removida.
+
+Todos os métodos tratam erros com logs e retornam `{ success: false, message: err.message, data: null }` com status adequado.
+
 **Service: `features/transaction/services/transactionService.js`**
 
 - `createSingleTransaction(transactionData, userId)`:
@@ -510,7 +567,26 @@ Cada método retorna sempre um JSON com `{ success, message, data }` e trata err
   - Garante propriedade.
   - Deleta com `TransactionRepository.deleteById`.
 
-### 5.8. Domínio: Saldo (`features/balance/services/balanceService.js`)
+### 5.8. Domínio: Saldo (`features/balance`)
+
+**Rotas: `features/balance/routes/ballanceRoutes.js`**
+
+- `GET /balance`
+  - Middlewares:
+    - `setUserId` – autenticação obrigatória.
+    - `parseTransactionFilter(TransactionQuerySchema)` – parseia e valida filtros da query string.
+  - Controller: `getBalance`.
+  - Suporta query parameters: `accountId` (obrigatório), `initialDate`, `finalDate`.
+
+**Controller: `features/balance/controllers/balanceController.js`**
+
+- `getBalance(userId, balanceFilters)`:
+  - Encaminha para `BalanceService.getBalance`.
+  - Retorna `200` com objeto contendo o saldo calculado.
+
+Trata erros com logs e retorna `{ success: false, message: err.message, data: null }` com status adequado.
+
+**Service: `features/balance/services/balanceService.js`**
 
 - Função interna `calculateBalance(initialBalance, transactions)`:
   - Percorre transações:
@@ -518,20 +594,21 @@ Cada método retorna sempre um JSON com `{ success, message, data }` e trata err
     - Senão (despesa) → subtrai `amount`.
   - Retorna `initialBalance + sumTransactions`.
 
-- `getAccountBalance(accountId, userId)`:
-  - Valida conta do usuário via `AccountService.getAccount`.
-  - Busca todas transações ligadas à conta via `TransactionRepository.find`.
-  - Retorna saldo total.
+- `getBalance(userId, filters)`:
+  - Valida que `filters.accountId` existe e pertence ao usuário via `AccountService.getAccount`.
+  - Se `filters.initialDate` e `filters.finalDate` existirem:
+    - Busca transações no período via `TransactionRepository.find`.
+    - Calcula saldo no período usando `calculateBalance`.
+  - Se apenas `filters.initialDate` existir (ou nenhuma data):
+    - Busca todas as transações até a data (ou todas se não houver data).
+    - Calcula saldo total ou até a data especificada.
+  - Retorna objeto com saldo calculado.
 
-- `getAccountBalanceByPeriod(accountId, userId, initialDate, finalDate)`:
-  - Valida conta.
-  - Busca transações filtradas por período.
-  - Calcula saldo no período.
-
-- `getAccountBalaceUntilPeriod(userId, accountId, date)`:
-  - Valida conta.
-  - Busca transações até a data fornecida.
-  - Calcula saldo até esse momento.
+Função interna `calculateBalance(initialBalance, transactions)`:
+  - Percorre transações:
+    - Se `type === "income"` → soma `amount`.
+    - Senão (despesa) → subtrai `amount`.
+  - Retorna `initialBalance + sumTransactions`.
 
 Essas funções preparam os dados que podem ser consumidos pelo frontend para:
 
