@@ -20,15 +20,15 @@ exports.findByIndex = async (indexObject) => {
 exports.findCategory = async (userId, filters) => {
   const query = { userId };
 
-  if (filters) {
+  if (filters.type) {
     query.type = filters.type;
   }
 
-  if (filters) {
+  if (filters.name) {
     query.name = filters.name;
   }
 
-  if (filters) {
+  if (filters.color) {
     query.name = filters.color;
   }
 

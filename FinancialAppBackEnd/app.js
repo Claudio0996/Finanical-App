@@ -6,6 +6,7 @@ const authRoutes = require("./features/auth/routes/authRoutes");
 const categoryRoutes = require("./features/category/routes/categoryRoutes");
 const accountRoutes = require("./features/account/routes/accountRoutes");
 const transactionsRoutes = require("./features/transaction/routes/transactionRoutes");
+const balanceRoutes = require("./features/balance/routes/ballanceRoutes");
 
 const app = express();
 
@@ -24,5 +25,6 @@ app.use(authRoutes);
 app.use(categoryRoutes);
 app.use(accountRoutes);
 app.use(transactionsRoutes);
+app.use(balanceRoutes);
 
 module.exports = { app };

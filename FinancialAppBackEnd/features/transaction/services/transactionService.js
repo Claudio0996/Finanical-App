@@ -50,10 +50,8 @@ exports.createMultipleTransaction = async (userId, transactionData) => {
       installmentGroupId,
       userId,
     };
-    console.log(transaction);
     transactions.push(transaction);
   }
-  console.log(transactions);
 
   const createdTransactions = await TransactionRepository.createManyTransactions(transactions);
 

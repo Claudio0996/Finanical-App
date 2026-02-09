@@ -1,20 +1,17 @@
 const BalanceService = require("../services/balanceService");
 
-//Função para trazer o saldo de uma conta
-exports.calculateBalance = async (req, res, next) => {
-  const accountId = req.params.id;
+exports.getBalance = async (req, res, next) => {
+  const balanceFilters = req.filters;
   const userId = req.userId;
 
   try {
-    const balance = await BalanceService.getAccountBalance(accountId, userId);
+    const balance = await BalanceService.getBalance(userId, balanceFilters);
 
     res.status(200).json({
       success: true,
-      message: "Saldo encontrado com sucesso",
+      message: "Saldo encontrado",
       data: { balance },
     });
-
-    res.status(200).json({});
   } catch (err) {
     console.log("[BalanceContollerError]. Erro interno: " + err.message);
     return res.status(err.status || 500).json({
@@ -23,9 +20,4 @@ exports.calculateBalance = async (req, res, next) => {
       data: null,
     });
   }
-};
-
-exports.calculateBalanceByPeriod = async (req, res, next) => {
-  const balanceFilters = req.query;
-  const userId = req.userId;
 };
