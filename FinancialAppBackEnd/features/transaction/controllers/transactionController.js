@@ -54,7 +54,7 @@ exports.getTransactions = async (req, res, next) => {
   const filters = req.query;
 
   try {
-    const transaction = await TransactionService.getTransaction(userId, filters);
+    const transaction = await TransactionService.getTransactions(userId, filters);
 
     res.status(200).json({
       success: true,
