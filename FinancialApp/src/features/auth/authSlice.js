@@ -12,27 +12,32 @@ const authSlice = createSlice({
     logout(state) {
       state.authStatus = "unauthenticated";
       state.user = null;
+      state.token = null;
     },
   },
   extraReducers: (builder) => {
     builder.addCase(loginThunk.fulfilled, (state, action) => {
       state.authStatus = "authenticated";
-      state.user = action.payload;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
     });
 
     builder.addCase(registerThunk.fulfilled, (state, action) => {
       state.authStatus = "authenticated";
-      state.user = action.payload;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
     });
 
     builder.addCase(restoreSessionThunk.fulfilled, (state, action) => {
       state.authStatus = "authenticated";
-      state.user = action.payload;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
     });
 
     builder.addCase(restoreSessionThunk.rejected, (state, action) => {
       state.authStatus = "unauthenticated";
       state.user = null;
+      state.token = null;
     });
   },
 });
