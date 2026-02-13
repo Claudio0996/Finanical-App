@@ -20,6 +20,8 @@ const transactionSlice = createSlice({
       state.fetchError = null;
     });
     builder.addCase(fetchTransactions.rejected, (state, action) => {
+      if (action.payload?.silent) return;
+
       state.fetchStatus = "error";
       state.fetchError = action.error;
     });

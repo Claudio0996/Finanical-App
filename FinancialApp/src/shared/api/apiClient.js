@@ -1,9 +1,8 @@
 import { store } from "@/app/store";
-import { logout } from "@/features/auth/authSlice";
+import { updateToken } from "@/features/auth/authSlice";
 
 const BASE_URL = "http://localhost:3000/";
 
-let isRefreshing = false;
 let refreshPromise;
 
 async function rawRequest(url, options) {
@@ -33,7 +32,7 @@ async function refreshFlow() {
   }
 }
 
-async function request(endpoint, queryString) {
+async function request({ endpoint, method, queryString, body }) {
   let finalUrl = `${BASE_URL}${endpoint}`;
 
   if (queryString) {
@@ -43,25 +42,40 @@ async function request(endpoint, queryString) {
   const token = store.getState().auth.token;
 
   const options = {
+    method,
     headers: {
       Authorization: `Bearer ${token}`,
     },
   };
 
+  if (body) {
+    options.body = JSON.stringify(body);
+    options.headers["Content-Type"] = "application/json";
+  }
+
   const response = await rawRequest(finalUrl, options);
 
   if (response.status === 401) {
-    if (!isRefreshing) {
-      isRefreshing = true;
-      refreshPromise = refreshFlow().finally(() => {
-        isRefreshing = false;
-      });
+    if (!refreshPromise) {
+      refreshPromise = refreshFlow()
+        .catch(() => {
+          throw {
+            type: "SESSION_EXPIRED",
+            status: 401,
+            message: "Sessão expirada",
+          };
+        })
+        .finally(() => {
+          refreshPromise = null;
+        });
     }
 
     const newToken = await refreshPromise;
 
     const newOptions = {
+      ...options,
       headers: {
+        ...options.headers,
         Authorization: `Bearer ${newToken}`,
       },
     };
@@ -69,16 +83,31 @@ async function request(endpoint, queryString) {
     const newResponse = await rawRequest(finalUrl, newOptions);
 
     if (newResponse.status === 401) {
-      store.dispatch(logout());
-      throw new Error("Sessão expirada");
+      throw {
+        type: "SESSION_EXPIRED",
+        status: 401,
+        message: "Sessão expirada",
+      };
+    } else if (!newResponse.ok) {
+      throw {
+        type: "HTTP_ERROR",
+        status: newResponse.status,
+        message: "Erro na request",
+      };
     }
+
     const formattedData = await newResponse.json();
     return formattedData;
+  } else if (!response.ok) {
+    throw {
+      type: "HTTP_ERROR",
+      status: response.status,
+      message: "Erro na request",
+    };
   }
 
-  const data = await response.json();
-
-  return data;
+  const formattedData = await response.json();
+  return formattedData;
 }
 
 export const get = async (endpoint, query) => {
@@ -87,5 +116,5 @@ export const get = async (endpoint, query) => {
     queryString = new URLSearchParams(query);
   }
 
-  request(endpoint, queryString);
+  return request({ endpoint, method: "GET", queryString });
 };

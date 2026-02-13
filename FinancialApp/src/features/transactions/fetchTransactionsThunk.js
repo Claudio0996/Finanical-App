@@ -8,6 +8,11 @@ const fetchTransactions = createAsyncThunk("transactions/fetchTransactions", asy
 
     return transactions;
   } catch (err) {
+    if (err.type === "SESSION_EXPIRED") {
+      thunkApi.dispatch(logout(err.message));
+      return thunkApi.rejectWithValue({ silent: true });
+    }
+
     return thunkApi.rejectWithValue(err.message);
   }
 });

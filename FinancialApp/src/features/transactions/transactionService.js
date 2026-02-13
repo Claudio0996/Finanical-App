@@ -1,8 +1,26 @@
 import transactionQuerySchema from "@/features/transactions/transactionQuerySchema";
-import apiClient from "@/shared/api/appClient";
+import apiClient from "@/shared/api/apiClient";
 
-const getTransactions = async (payloadFilters) => {
+export const getTransactions = async (payloadFilters) => {
   const payloadValidation = transactionQuerySchema.safeParse(payloadFilters);
 
-  const data = await apiClient.get("/transactions", payloadValidation.data);
+  if (!payloadValidation.success) {
+    throw {
+      type: "Validation",
+      message: "Filtros selecionados não são permitidos",
+    };
+  }
+
+  const queryData = payloadValidation.data ?? {};
+
+  const response = await apiClient.get("/transactions", queryData);
+
+  if (!response.success) {
+    throw {
+      type: "DOMAIN_ERROR",
+      message: response.message,
+    };
+  }
+
+  return response.data;
 };
