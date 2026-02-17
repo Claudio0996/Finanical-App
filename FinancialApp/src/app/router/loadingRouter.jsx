@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router";
 
-const loadingRouter = createBrowserRouter([{ element: <LoadingPage /> }]);
+import LoadingPage from "../layouts/LoadingPage";
+
+const loadingRouter = createBrowserRouter([{ path: "/", element: <LoadingPage /> }]);
 
 export default loadingRouter;

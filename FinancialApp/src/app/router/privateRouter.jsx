@@ -1,15 +1,17 @@
 import { createBrowserRouter } from "react-router";
 
+import AuthenticatedLayout from "../layouts/AuthenticatedLayout";
+
 const privateRouter = createBrowserRouter([
   {
     path: "/",
     element: <AuthenticatedLayout />,
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: "transactions", element: <TransactionsPage /> },
-      { path: "accounts", element: <AccountsPage /> },
-      { path: "categories", element: <CateogriesPage /> },
-      { path: "profile", element: <ProfilePage /> },
+      { index: true },
+      { path: "transactions" },
+      { path: "accounts" },
+      { path: "categories" },
+      { path: "profile" },
     ],
   },
 ]);

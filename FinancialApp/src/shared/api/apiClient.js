@@ -1,5 +1,5 @@
-import { store } from "@/app/store";
-import { updateToken } from "@/features/auth/authSlice";
+import { store } from "../../app/store";
+import { updateToken } from "../../features/auth/authSlice";
 
 const BASE_URL = "http://localhost:3000/";
 

@@ -1,5 +1,5 @@
-import transactionQuerySchema from "@/features/transactions/transactionQuerySchema";
-import apiClient from "@/shared/api/apiClient";
+import transactionQuerySchema from "./transactionQuerySchema";
+import apiClient from "../../shared/api/apiClient";
 
 export const getTransactions = async (payloadFilters) => {
   const payloadValidation = transactionQuerySchema.safeParse(payloadFilters);
