@@ -25,30 +25,41 @@ const authSlice = createSlice({
     updateToken(state, action) {
       state.token = action.payload;
     },
-    clearRegisterError(state, action) {
+    clearRegisterError(state, _) {
       state.registerError = null;
+    },
+    clearLoginError(state, _) {
+      state.loginError = null;
     },
   },
   extraReducers: (builder) => {
-    // builder.addCase(loginThunk.fulfilled, (state, action) => {
-    //   state.authStatus = "authenticated";
-    //   state.user = action.payload.user;
-    //   state.token = action.payload.token;
-    // });
+    builder.addCase(loginThunk.fulfilled, (state, action) => {
+      state.loginStatus = null;
+      state.authStatus = "authenticated";
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.loginError = null;
+    });
 
-    // builder.addCase(loginThunk.rejected, (state, action) => {
-    //   state.authStatus = "unauthenticated";
-    //   state.user = null;
-    //   state.token = null;
-    // });
+    builder.addCase(loginThunk.pending, (state, action) => {
+      state.loginStatus = "loading";
+      state.loginError = null;
+    });
+
+    builder.addCase(loginThunk.rejected, (state, action) => {
+      state.authStatus = "unauthenticated";
+      state.loginError = action.payload.message;
+      state.loginStatus = "error";
+    });
 
     builder.addCase(registerThunk.fulfilled, (state, action) => {
-      state.registerStatus = "registered";
+      state.registerStatus = null;
       state.authStatus = "authenticated";
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.registerError = null;
-      state.registerStatus = null;
+      state.loginError = null;
+      state.loginStatus = null;
     });
 
     builder.addCase(registerThunk.pending, (state, action) => {
@@ -57,22 +68,19 @@ const authSlice = createSlice({
     });
 
     builder.addCase(registerThunk.rejected, (state, action) => {
-      if (action.payload?.silent) {
-        state.registerStatus = "error";
-        state.registerError = action.payload.message;
-        return;
-      }
-
+      state.authStatus = "unauthenticated";
       state.registerStatus = "error";
       state.registerError = action.payload.message;
-      state.user = null;
-      state.token = null;
     });
 
     builder.addCase(restoreSessionThunk.fulfilled, (state, action) => {
       state.authStatus = "authenticated";
       state.user = action.payload.user;
       state.token = action.payload.token;
+    });
+
+    builder.addCase(restoreSessionThunk.pending, (state, action) => {
+      state.authStatus = "checking";
     });
 
     builder.addCase(restoreSessionThunk.rejected, (state, action) => {
@@ -83,6 +91,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, updateToken, clearRegisterError } = authSlice.actions;
+export const { logout, updateToken, clearRegisterError, clearLoginError } = authSlice.actions;
 
 export default authSlice.reducer;
