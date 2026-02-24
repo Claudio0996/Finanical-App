@@ -25,6 +25,9 @@ const authSlice = createSlice({
     updateToken(state, action) {
       state.token = action.payload;
     },
+    clearRegisterError(state, action) {
+      state.registerError = null;
+    },
   },
   extraReducers: (builder) => {
     // builder.addCase(loginThunk.fulfilled, (state, action) => {
@@ -45,22 +48,25 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.registerError = null;
+      state.registerStatus = null;
     });
 
     builder.addCase(registerThunk.pending, (state, action) => {
       state.registerStatus = "loading";
-      state.user = null;
-      state.token = null;
       state.registerError = null;
     });
 
     builder.addCase(registerThunk.rejected, (state, action) => {
-      if (action.payload?.silent) return;
+      if (action.payload?.silent) {
+        state.registerStatus = "error";
+        state.registerError = action.payload.message;
+        return;
+      }
 
       state.registerStatus = "error";
+      state.registerError = action.payload.message;
       state.user = null;
       state.token = null;
-      state.errorRegisterMessage = action.payload;
     });
 
     builder.addCase(restoreSessionThunk.fulfilled, (state, action) => {
@@ -77,6 +83,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, updateToken } = authSlice.actions;
+export const { logout, updateToken, clearRegisterError } = authSlice.actions;
 
 export default authSlice.reducer;

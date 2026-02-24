@@ -1,15 +1,15 @@
 import registerSchema from "./registerSchema";
 
 export const refresh = async () => {
-  const response = await fetch("/api/refresh", {
-    credentials: include,
+  const response = await fetch("http://localhost:3000/refresh", {
+    credentials: "include",
     method: "POST",
   });
 
   if (!response.ok) {
     throw {
       type: "HTTP_ERROR",
-      message: "Não foi possível fazer a requisição",
+      message: "Não foi possível fazer a requisição. Tente novamente mais tarde!",
     };
   }
 
@@ -35,7 +35,7 @@ export const register = async (payload) => {
     };
   }
 
-  const response = await fetch("/api/register", {
+  const response = await fetch("http://localhost:3000/register", {
     headers: {
       "Content-Type": "application/json",
     },
@@ -44,10 +44,11 @@ export const register = async (payload) => {
   });
 
   if (!response.ok) {
+    const error = await response.json();
     throw {
-      type: "HTTP_ERROR",
+      type: "VALIDATION_ERROR",
       status: response.status,
-      message: "Erro na request ",
+      message: error.message,
     };
   }
 

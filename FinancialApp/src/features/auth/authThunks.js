@@ -8,11 +8,14 @@ export const restoreSessionThunk = createAsyncThunk("auth/restoreSessionThunk", 
 
     return refreshSession;
   } catch (err) {
-    if (err.type !== "AUTH_ERROR") {
-      return thunkApi.rejectWithValue({ silent: true });
+    if (err instanceof TypeError) {
+      return thunkApi.rejectWithValue({ silent: true, message: "Não foi possível se conectar ao servidor" });
+    }
+    if (err.type !== "HTTP_ERROR") {
+      return thunkApi.rejectWithValue({ silent: true, message: err.message });
     }
 
-    return thunkApi.rejectWithValue(err.message);
+    return thunkApi.rejectWithValue({ message: err.message });
   }
 });
 
@@ -22,10 +25,14 @@ export const registerThunk = createAsyncThunk("auth/registerThunk", async (paylo
 
     return registerData;
   } catch (err) {
-    if (err.type !== "AUTH_ERROR") {
-      return thunkApi.rejectWithValue({ silent: true });
+    console.log(err);
+    if (err instanceof TypeError) {
+      return thunkApi.rejectWithValue({ silent: true, message: "Não foi possível se conectar ao servidor" });
+    }
+    if (err.type !== "HTTP_ERROR") {
+      return thunkApi.rejectWithValue({ silent: true, message: err.message });
     }
 
-    return thunkApi.rejectWithValue(err.message);
+    return thunkApi.rejectWithValue({ message: err.message });
   }
 });

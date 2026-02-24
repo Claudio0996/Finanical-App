@@ -6,7 +6,7 @@ const User = zod
     name: zod.coerce.string().trim(),
     email: zod.coerce.string().trim().lowercase().email(),
     password: zod.coerce.string(),
-    confirmPassword: zod.coerce.string(),
+    passwordConfirmation: zod.coerce.string(),
   })
   .superRefine((obj, ctx) => {
     const testedPassword = validatePassword(obj.password);
@@ -16,11 +16,11 @@ const User = zod
         ctx.addIssue({
           path: ["password"],
           message: error,
-        })
+        }),
       );
     }
 
-    if (obj.password !== obj.confirmPassword) {
+    if (obj.password !== obj.passwordConfirmation) {
       ctx.addIssue({
         path: ["confirmPassword"],
         message: "Passwords don't match",
@@ -39,7 +39,7 @@ const loginSchema = User.pick({
       ctx.addIssue({
         path: ["password"],
         message: error,
-      })
+      }),
     );
   }
 });
