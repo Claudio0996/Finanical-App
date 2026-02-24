@@ -1,6 +1,6 @@
 # 💰 Financial App
 
-Aplicativo financeiro completo desenvolvido com React e Node.js, oferecendo funcionalidades de autenticação, gerenciamento de transações e controle financeiro pessoal.
+Aplicativo financeiro full-stack desenvolvido com **React (Vite)** e **Node.js/Express + MongoDB**, com autenticação via **JWT** e refresh token via **cookie HTTP-only**. O backend já expõe os domínios financeiros (contas, categorias, transações e saldo); o frontend está em evolução, com base de autenticação e estrutura de rotas/layouts.
 
 ## 📋 Índice
 
@@ -51,13 +51,14 @@ O Financial App é uma aplicação web full-stack desenvolvida para auxiliar no 
 Financial App/
 ├── FinancialApp/              # Frontend (React)
 │   ├── src/
-│   │   ├── app/              # Configuração da aplicação
-│   │   ├── components/       # Componentes reutilizáveis
-│   │   ├── features/         # Funcionalidades por domínio
-│   │   │   └── auth/         # Módulo de autenticação
-│   │   ├── pages/            # Páginas da aplicação
-│   │   ├── shared/           # Utilitários compartilhados
-│   │   └── themes/           # Configuração de temas
+│   │   ├── app/              # Bootstrap, store e roteadores
+│   │   │   ├── layouts/      # Layouts (public/authenticated/loading)
+│   │   │   └── router/       # Routers (public/private/loading)
+│   │   ├── features/         # Features por domínio (em progresso)
+│   │   │   ├── auth/         # Auth (register + restore session)
+│   │   │   └── transactions/ # Base de listagem/filtros (WIP)
+│   │   ├── shared/           # Infra compartilhada (ex.: api client)
+│   │   └── themes/           # Tema MUI
 │   ├── public/               # Arquivos estáticos
 │   └── package.json
 │
@@ -66,11 +67,14 @@ Financial App/
     ├── core/                 # Núcleo da aplicação
     ├── features/             # Funcionalidades por domínio
     │   ├── auth/             # Autenticação
+    │   ├── account/          # Contas financeiras
+    │   ├── category/         # Categorias
+    │   ├── transaction/      # Transações
+    │   ├── balance/          # Cálculo de saldo
     │   ├── security/         # Segurança
     │   ├── token/            # Gerenciamento de tokens
     │   └── user/             # Gerenciamento de usuários
     ├── middlewares/          # Middlewares Express
-    ├── models/               # Modelos do banco de dados
     ├── util/                 # Utilitários
     └── package.json
 ```
@@ -116,8 +120,10 @@ npm install
 PORT=3000
 MONGO_URI=sua_string_de_conexão_mongodb
 JWT_SECRET=seu_secret_jwt_aqui
-JWT_REFRESH_SECRET=seu_refresh_secret_aqui
+REFRESH_TOKEN_TTL_MS=2592000000
 ```
+
+`REFRESH_TOKEN_TTL_MS` é o tempo de vida do refresh token em milissegundos (ex.: 30 dias = `2592000000`).
 
 2. Configure a string de conexão do MongoDB:
    - Para MongoDB local: `mongodb://localhost:27017/financial-app`
@@ -125,7 +131,9 @@ JWT_REFRESH_SECRET=seu_refresh_secret_aqui
 
 ### Frontend
 
-1. Crie um arquivo `.env` na pasta `FinancialApp` (se necessário):
+1. O projeto tem **proxy do Vite** configurado para `/api` → backend (`vite.config.js`). Porém, o código atual também usa chamadas diretas para `http://localhost:3000` em alguns pontos (ex.: refresh/registro).
+
+2. (Opcional) Crie um arquivo `.env` na pasta `FinancialApp` (se você quiser padronizar a base URL no futuro):
 
 ```env
 VITE_API_URL=http://localhost:3000
@@ -161,55 +169,20 @@ npm run dev
 
 O aplicativo estará disponível em `http://localhost:5173` (porta padrão do Vite)
 
-## ✨ Funcionalidades (MVP Finalizado)
+## ✨ Funcionalidades (estado atual do código)
 
-### Autenticação
-- ✅ Registro de novos usuários com validação completa
-- ✅ Login com validação de credenciais
-- ✅ Refresh token automático via cookie HTTP-only
-- ✅ Rotas protegidas com middleware de autenticação JWT
-- ✅ Gerenciamento de sessão persistente
-- ✅ Revalidação automática de sessão ao iniciar aplicação
+### Backend (API pronta)
+- ✅ **Autenticação**: `POST /register`, `POST /login`, `POST /refresh` com access token JWT e refresh token em cookie HTTP-only
+- ✅ **Contas**: CRUD completo de contas por usuário, com unicidade por `(bankId, userId, type)`
+- ✅ **Categorias**: CRUD completo por usuário, com unicidade por `(userId, type, name)`
+- ✅ **Transações**: criação única e parcelada, listagem com filtros (conta/categoria/tipo/período), edição/exclusão com validação de propriedade
+- ✅ **Saldo**: `GET /balance` calcula saldo com base no saldo inicial (quando `accountId` é fornecido) e soma algébrica das transações (`receita` soma, `despesa` subtrai)
 
-### Contas Financeiras
-- ✅ Cadastro de contas financeiras (corrente, poupança, investimento)
-- ✅ Suporte para múltiplas moedas (BRL, USD)
-- ✅ Listagem de todas as contas do usuário autenticado
-- ✅ Busca de conta específica por ID
-- ✅ Edição e exclusão de contas com validação de propriedade
-- ✅ Validação de unicidade (mesma conta não pode ser duplicada)
-
-### Categorias
-- ✅ Cadastro de categorias de receita e despesa
-- ✅ Personalização de cores para identificação visual
-- ✅ Edição, listagem e exclusão de categorias por usuário
-- ✅ Validação de tipo (categoria compatível com tipo de transação)
-- ✅ Validação de unicidade por usuário
-
-### Transações
-- ✅ Criação de transações únicas (receita ou despesa)
-- ✅ Criação de transações parceladas com cálculo automático de parcelas
-- ✅ Cálculo automático de valores e datas das parcelas
-- ✅ Agrupamento de transações parceladas por grupo
-- ✅ Listagem de transações com filtros avançados:
-  - Por conta (`accountId`)
-  - Por período (`initialDate`, `finalDate`)
-  - Por categoria (`categoryId`)
-  - Por tipo (`type`: receita/despesa)
-- ✅ Edição e exclusão de transações apenas do usuário dono
-- ✅ Validação de consistência entre tipo de transação e categoria
-
-### Saldos
-- ✅ Cálculo de saldo total por conta com base nas transações
-- ✅ Cálculo de saldo em períodos específicos
-- ✅ Cálculo de saldo até uma data específica
-- ✅ Integração completa com sistema de transações
-- ✅ API pronta para consumo no dashboard
-
-### Dashboard
-- ✅ Visualização de estado autenticado do usuário
-- ✅ Estrutura pronta para integração com APIs de contas, categorias, transações e saldos
-- ✅ Base para implementação de gráficos e relatórios financeiros
+### Frontend (em desenvolvimento)
+- ✅ **Bootstrap da app**: `AppInitializer` dispara restauração de sessão; `AppRouter` alterna routers (loading/public/private) com base em `authStatus`
+- ✅ **Registro**: tela `RegisterPage` com validação via Zod e feedback de erro
+- ⚠️ **Login**: rota `/login` existe no router público, mas ainda não possui página/elemento implementado
+- ⚠️ **Domínios financeiros no UI**: rotas privadas (`/transactions`, `/accounts`, `/categories`, etc.) existem como placeholders no router privado (sem telas conectadas ainda)
 
 ### Segurança
 - 🔐 Hash de senhas com bcrypt
@@ -221,33 +194,33 @@ O aplicativo estará disponível em `http://localhost:5173` (porta padrão do Vi
 
 ### Frontend (`FinancialApp/src`)
 
-- **`app/`** - Configuração principal (Redux store, rotas, inicializadores)
-- **`components/`** - Componentes reutilizáveis (Sidebar, Button, etc.)
-- **`features/auth/`** - Módulo completo de autenticação
-  - `components/` - Componentes específicos de auth
-  - `context/` - Context API e thunks Redux
-  - `hooks/` - Custom hooks
-  - `pages/` - Páginas de Login e Registro
-  - `schemas/` - Schemas de validação Zod
-  - `services/` - Serviços de API
-  - `storage/` - Gerenciamento de storage local
-  - `util/` - Utilitários de autenticação
-- **`pages/`** - Páginas principais (Dashboard, Loading)
-- **`shared/`** - Utilitários compartilhados
-- **`themes/`** - Configuração de temas
+- **`app/`** - Bootstrap, estado global e roteamento
+  - `AppRoot.jsx` - Root com `Provider`
+  - `AppInitializer.jsx` - Dispara restauração de sessão
+  - `AppRouter.jsx` - Seleciona router conforme `authStatus`
+  - `store.js` - Redux store
+  - `layouts/` - Layouts (public/authenticated/loading)
+  - `router/` - Routers (public/private/loading)
+- **`features/auth/`** - Autenticação (base)
+  - `authSlice.js`, `authThunks.js`, `authService.js`, `registerSchema.js`
+  - `pages/RegisterPage.jsx`
+- **`features/transactions/`** - Base de transações (WIP)
+- **`shared/api/`** - Cliente HTTP (refresh flow + Authorization)
+- **`themes/`** - Tema MUI (`index.jsx`)
 
 ### Backend (`FinancialAppBackEnd`)
 
-- **`config/`** - Configurações (banco de dados)
-- **`core/`** - Núcleo (cookies, tratamento de erros)
-- **`features/`** - Funcionalidades organizadas por domínio
-  - `auth/` - Autenticação (controllers, routes, services)
-  - `security/` - Serviços de segurança (hash de senhas)
-  - `token/` - Gerenciamento de refresh tokens
-  - `user/` - Gerenciamento de usuários (models, repositories, services)
-- **`middlewares/`** - Middlewares Express
-- **`models/`** - Modelos Mongoose (transactions, installments)
-- **`util/`** - Utilitários gerais
+- **Entradas**
+  - `app.js` - Middlewares globais (JSON/cookies/CORS) + registro de rotas
+  - `index.js` - Carrega `.env` e inicia `startServer(app)`
+  - `server.js` - Conecta ao MongoDB e sobe o servidor HTTP
+- **`config/`** - MongoDB (`db.js`)
+- **`core/`** - Erros e cookies (`errors.js`, `cookies.js`)
+- **`middlewares/`** - Auth (`authMiddleware.js`), validação (`schemaValidations.js`) e filtros (`parseTransactionFilters.js`)
+- **`features/`** - Domínios (rotas/controllers/services/repositories/models/schemas)
+  - `auth/`, `user/`, `token/`, `security/`
+  - `account/`, `category/`, `transaction/`, `balance/`
+- **`util/`** - Utilitários (`validatePassword.js`, `dateFunctions.js`)
 
 ## 🧩 Domínios Funcionais
 
@@ -256,7 +229,7 @@ O aplicativo estará disponível em `http://localhost:5173` (porta padrão do Vi
 - **Autenticação (`features/auth`)**
   - `POST /register` - Registro de novos usuários
   - `POST /login` - Login com email e senha
-  - `POST /refresh` - Revalidação de sessão via refresh token
+  - `POST /refresh` - Revalidação de sessão via refresh token (cookie `refreshToken`)
   - Serviços para geração e verificação de tokens de acesso
   - Integração com refresh tokens e cookies HTTP-only
 

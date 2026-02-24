@@ -33,7 +33,7 @@ Documento gerado com base na estrutura atual do **backend** do sistema. Contém 
 | RNF02 | Refresh token enviado e recebido via cookie HTTP-only. |
 | RNF03 | Senhas armazenadas com hash (bcrypt) e, opcionalmente, pepper. |
 | RNF04 | Validação de entrada via schemas (ex.: Zod) antes do processamento. |
-| RNF05 | Respostas de erro padronizadas com `success`, `message` e `data`. |
+| RNF05 | Respostas de sucesso/erro padronizadas nos controllers com `success`, `message` e `data`; validações de schema retornam `422` com `{ "message": ... }`. |
 | RNF06 | CORS configurado para origem do frontend (ex.: `http://localhost:5173`) com `credentials: true`. |
 
 ---
@@ -46,7 +46,7 @@ Documento gerado com base na estrutura atual do **backend** do sistema. Contém 
 |----|--------|------------------|
 | RN01 | **E-mail único:** Não pode existir mais de um usuário com o mesmo e-mail. | `userService.createUser` |
 | RN02 | **Senha forte:** A senha deve conter: ao menos uma letra minúscula, uma maiúscula, um número e um símbolo. | Schema de usuário / `validatePassword` |
-| RN03 | **Confirmação de senha:** No cadastro, os campos `password` e `confirmPassword` devem ser iguais. | Schema de usuário (registro) |
+| RN03 | **Confirmação de senha:** No cadastro, os campos `password` e `passwordConfirmation` devem ser iguais. | Schema de usuário (registro) |
 | RN04 | **Login:** Só é possível logar com e-mail cadastrado e senha correta; caso contrário, retorna erro de credencial ou usuário não encontrado. | `authService.loginUser` |
 | RN05 | **Sessão:** Após login ou registro, o sistema emite um access token (JWT) e um refresh token; o refresh token é persistido e enviado em cookie. | `authController` / `authService` |
 | RN06 | **Refresh:** A rota de refresh exige o cookie com o refresh token; o token é rotacionado (antigo revogado, novo emitido) e um novo access token é retornado. | `authService.refreshSession` / `refreshTokenService.rotateToken` |
@@ -82,16 +82,16 @@ Documento gerado com base na estrutura atual do **backend** do sistema. Contém 
 | RN21 | **Edição de tipo:** Na atualização de uma transação, o tipo da transação não pode ser alterado (“Transações não são do mesmo tipo”). | `transactionService.updateTransaction` |
 | RN22 | **Propriedade:** Transações só podem ser listadas, alteradas ou excluídas pelo dono (`userId`). | `transactionService` (getTransactions, updateTransaction, deleteTransaction) |
 | RN23 | **Transação única:** Deve ter `type`, `amount` (positivo), `date`, `accountId`, `categoryId` e `description` (mín. 4 caracteres). | Schema `singleTransactionSchema` |
-| RN24 | **Transação parcelada:** Deve ter `type`, `totalAmount` (positivo), `installments` (inteiro ≥ 2), `firstDate`, `accountId`, `categoryId` e `description` (mín. 4 caracteres). | Schema `multipleTransactionSchema` |
+| RN24 | **Transação parcelada:** Deve ter `type`, `amount` (positivo), `installments` (inteiro ≥ 2), `date`, `accountId`, `categoryId` e `description` (mín. 4 caracteres). | Schema `multipleTransactionSchema` |
 | RN25 | **Cálculo de parcelas:** O valor de cada parcela é `(valor total / número de parcelas)` arredondado em 2 casas decimais; as datas das parcelas são obtidas somando meses à data inicial (parcela 1 = mês 0, parcela 2 = mês 1, etc.). | `transactionService.createMultipleTransaction` e `getInstallmentDate` |
-| RN26 | **Agrupamento de parcelas:** Transações parceladas são agrupadas por `installmentGroupId` (UUID) e possuem `installmentNumber` e `totalInstallments`. | Modelo `Transaction` e `transactionService.createMultipleTransaction` |
+| RN26 | **Agrupamento de parcelas:** Transações parceladas são agrupadas por `installmentGroupId` (UUID) e possuem `installmentNumber`. O campo `totalInstallments` existe no schema do modelo, mas não é preenchido pela criação parcelada no código atual. | Modelo `Transaction` e `transactionService.createMultipleTransaction` |
 
 ### 2.5. Saldo
 
 | ID | Regra | Onde se aplica |
 |----|--------|------------------|
 | RN27 | **Cálculo do saldo:** O saldo é o saldo inicial da conta mais a soma algébrica das transações: transações do tipo receita somam; transações do tipo despesa subtraem. | `balanceService.calculateBalance` |
-| RN28 | **Saldo por conta:** O saldo é sempre calculado para uma conta específica (filtro `accountId` obrigatório), que deve pertencer ao usuário autenticado. | `balanceService.getBalance` |
+| RN28 | **Saldo por conta (quando `accountId` é informado):** O saldo considera o `initialBalance` da conta e as transações filtradas; a conta deve pertencer ao usuário autenticado. | `balanceService.getBalance` |
 | RN29 | **Saldo em período:** O sistema suporta cálculo de saldo considerando apenas transações em um intervalo de datas (`initialDate` e `finalDate`) ou até uma data específica (`initialDate`). | `balanceService.getBalance` com filtros de data |
 
 *Nota:* No código do `balanceService`, o tipo é tratado como `"receita"` para soma e `"despesa"` para subtração, mantendo consistência com o restante do sistema. A regra de negócio é: receita soma, despesa subtrai.
@@ -115,11 +115,19 @@ Documento gerado com base na estrutura atual do **backend** do sistema. Contém 
 - **Account:** CRUD completo (`GET /accounts`, `GET /accounts/:id`, `POST /accounts`, `PUT /accounts/:id`, `DELETE /accounts/:id`); unicidade (bankId + userId + type); propriedade por usuário.
 - **Category:** CRUD completo (`GET /categories`, `GET /categories/:id`, `POST /categories`, `PUT /categories/:id`, `DELETE /categories/:id`); unicidade (userId + type + name); propriedade por usuário.
 - **Transaction:** CRUD completo (`POST /transactions`, `POST /transactions/installments`, `GET /transactions`, `PUT /transactions/:id`, `DELETE /transactions/:id`); transações únicas e parceladas; validação de conta/categoria e tipo; propriedade por usuário; filtros avançados (conta, período, categoria, tipo).
-- **Balance:** cálculo de saldo (`GET /balance`); suporta filtros por conta (obrigatório), período inicial e final; cálculo de saldo total ou por período.
+- **Balance:** cálculo de saldo (`GET /balance`); suporta filtros (por conta, período, categoria, tipo). Quando `accountId` é informado, o saldo considera `initialBalance` da conta.
 - **Token:** geração, rotação, revogação e persistência de refresh tokens.
 - **Security:** hash e comparação de senhas (bcrypt + pepper opcional).
 
 Rotas expostas no `app.js`: **auth**, **category**, **account**, **transaction**, **balance**. Todos os domínios estão completamente implementados com rotas, controllers, services e repositories funcionais.
+
+---
+
+## 4. Pontos de atenção (WIP)
+
+- `schemaValidations.validate` retorna `422` com `{ "message": ... }` (sem `success/data`), diferente do padrão dos controllers.
+- O middleware `parseTransactionFilters` (usado em `GET /balance`) não está populando `req.filters` com os filtros validados no formato esperado.
+- `authService.refreshSession` retorna `accessToken`, mas o controller responde `data.token` (padronizar para o refresh funcionar corretamente no consumo).
 
 ---
 

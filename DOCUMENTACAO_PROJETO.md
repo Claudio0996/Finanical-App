@@ -45,81 +45,51 @@ O objetivo é permitir que o usuário:
 
 **Arquivos principais:**
 
-- `src/app/AuthInitializer.jsx`
-- `src/app/App.jsx`
-- `src/app/store.jsx`
-- `src/features/auth/context/AuthContext.jsx`
-- `src/features/auth/components/ProtectedRoute.jsx`
-- `src/features/auth/pages/Login.jsx`
-- `src/features/auth/pages/Register.jsx`
-- `src/features/auth/context/loginThunk.js`
-- `src/features/auth/context/registerThunk.js`
-- `src/features/auth/context/restoreSessionThunk.js`
-- `src/features/auth/services/loginService.js`
-- `src/features/auth/services/registerService.js`
-- `src/features/auth/services/refreshService.js`
+- `src/app/AppRoot.jsx`
+- `src/app/AppInitializer.jsx`
+- `src/app/AppRouter.jsx`
+- `src/app/store.js`
+- `src/app/router/publicRouter.jsx`
+- `src/app/router/privateRouter.jsx`
+- `src/app/router/loadingRouter.jsx`
+- `src/features/auth/authSlice.js`
+- `src/features/auth/authThunks.js`
+- `src/features/auth/authService.js`
+- `src/features/auth/registerSchema.js`
+- `src/features/auth/pages/RegisterPage.jsx`
 
 **Sequência:**
 
 1. **Inicialização da app**
-   - O componente raiz é o `AuthInitializer`, que:
-     - Lê o estado de autenticação no Redux.
-     - Dispara `restoreSessionThunk()` logo ao montar (`useEffect`).
-     - Enquanto o estado `authStatus` está `"idle"` ou `"checking"`, o componente não renderiza a SPA (retorna `null`), evitando flickers de tela.
+   - O componente raiz é o `AppRoot`, que monta:
+     - `AppInitializer` (dispara `restoreSessionThunk()` no `useEffect`)
+     - `AppRouter` (seleciona o router ativo conforme `authStatus`)
 
 2. **Restauração de sessão (`restoreSessionThunk`)**
-   - `restoreSessionThunk` chama `RefreshSession` (`refreshService.js`), que faz:
-     - `POST /api/refresh` com `credentials: "include"` (usa o cookie de refresh do backend).
+   - `restoreSessionThunk` chama `refresh()` (`authService.js`), que faz:
+     - `POST http://localhost:3000/refresh` com `credentials: "include"` (usa o cookie `refreshToken` do backend).
    - Se sucesso:
      - O Redux atualiza `token`, `user` e `authStatus = "authenticated"`.
    - Se falha:
      - `authStatus = "unauthenticated"`, forçando o usuário a logar novamente.
 
-3. **Roteamento e rotas protegidas**
-   - `App.jsx` define as rotas com `createBrowserRouter`:
-     - `/login` → `LoginPage`
-     - `/register` → `RegisterPage`
-     - `/` → `ProtectedRoute` (rota raiz protegida), com `DashboardPage` como rota filha `index`.
-   - `ProtectedRoute`:
-     - Lê `authStatus` do Redux.
-     - Se `authStatus` é `"checking"` ou `"idle"` → renderiza `LoadingPage` (tela de carregamento).
-     - Se `"unauthenticated"` → redireciona para `/login`.
-     - Se `"authenticated"` → renderiza `<Outlet />` (ex.: `DashboardPage`).
+3. **Roteamento (public/private/loading)**
+   - `AppRouter` seleciona um router conforme `authStatus`:
+     - `"checking"` → `loadingRouter` (layout de loading)
+     - `"unauthenticated"` → `publicRouter` (layout público)
+     - `"authenticated"` → `privateRouter` (layout autenticado)
+   - `publicRouter` hoje renderiza `RegisterPage` como rota index (`/`). A rota `/login` existe como path, mas ainda não possui elemento implementado.
+   - `privateRouter` define paths (`/transactions`, `/accounts`, `/categories`, etc.) como placeholders (sem páginas implementadas ainda).
 
-4. **Login**
-   - Tela: `Login.jsx`
-     - Usa `useLoginForm` para gerenciar estado e validação de campos.
-     - Dispara `loginThunk({ email, password })` no submit.
-   - `loginThunk`:
-     - Chama `Login(email, password)` (`loginService.js`).
-   - `loginService.js`:
-     - Valida o payload com `LoginPayloadSchema.safeParse`.
-     - Faz `POST /api/login`:
-       - Endpoint configurado como `"/api/login"` (pode estar proxado pelo Vite/servidor).
-       - `Content-Type: application/json`
-       - `credentials: "include"` para permitir cookie de refresh.
-     - Utiliza `checkResponseError` para tratar respostas HTTP de erro.
-     - Valida a resposta com `LoginResponseSchema`.
-     - Se `success === false` ou schema inválido, lança `Error`.
-   - `AuthContext` (slice Redux):
-     - `loginThunk.pending` → `loginStatus = "loading"`, limpa erros.
-     - `loginThunk.fulfilled` → salva `token` e `user`, `authStatus = "authenticated"`, `loginStatus = "succeeded"`.
-     - `loginThunk.rejected` → `authStatus = "unauthenticated"`, `loginStatus = "failed"`, `loginError = action.payload`.
-   - Na tela:
-     - Se `loginError` existir, mostra mensagem de erro em texto vermelho.
-     - Ao alterar campos, se havia erro, chama `clearLoginError()` para limpar.
-     - `useEffect` em `Login.jsx` redireciona para `/` assim que `authStatus === "authenticated"`.
+4. **Login (em desenvolvimento)**
+   - O backend possui `POST /login`, porém o frontend ainda não contém uma tela/fluxo de login implementado no código atual.
 
 5. **Registro (Cadastro)**
-   - Tela: `Register.jsx` (similar a login, com mais campos).
-   - `registerThunk` chama `Register(name, email, password, confirmPassword)`:
-     - `RegisterPayloadSchema.safeParse` valida o corpo.
-     - Em caso de erro, é lançado um objeto com `type: "validation"` e `errors` formatados.
-     - Faz `POST http://localhost:3000/register` com `credentials: "include"`.
-     - Valida a resposta com `RegisterResponseSchema`.
-   - `AuthContext`:
-     - `registerThunk.fulfilled` → salva `token`, `user`, `authStatus = "authenticated"`.
-     - Erros de registro são salvos em `registerError`.
+   - Tela: `RegisterPage.jsx`.
+   - `registerThunk` chama `register(payload)` (`authService.js`):
+     - Valida o payload com `registerSchema` (Zod).
+     - Faz `POST http://localhost:3000/register` com JSON.
+     - Em caso de erro HTTP, lê `error.message` do backend e salva no Redux como `registerError`.
 
 6. **Logout**
    - A action `logout` do slice `auth` limpa `token`, `user` e marca `authStatus = "unauthenticated"`.
@@ -140,32 +110,31 @@ O objetivo é permitir que o usuário:
   - Zod para validação de dados (payloads e respostas da API).
 
 - **Pontos de entrada**
-  - `main.jsx`: monta a aplicação, conecta o Redux Provider, tema e `AuthInitializer`.
-  - `AuthInitializer.jsx`: cuida da restauração de sessão antes de montar o `App`.
-  - `App.jsx`: define o roteamento principal.
+  - `main.jsx`: monta a aplicação (`ThemeProvider`) e renderiza `AppRoot`.
+  - `AppRoot.jsx`: conecta o Redux Provider e monta `AppInitializer` + `AppRouter`.
+  - `AppInitializer.jsx`: dispara `restoreSessionThunk()` no `useEffect`.
+  - `AppRouter.jsx`: alterna entre routers (loading/public/private) conforme `authStatus`.
 
 ### 4.2. Estado Global – Auth
 
-**Arquivo:** `src/features/auth/context/AuthContext.jsx`
+**Arquivo:** `src/features/auth/authSlice.js`
 
 - **Estado inicial (`initialState`)**
   - `token`: JWT de acesso.
   - `user`: dados públicos do usuário autenticado.
-  - `authStatus`: `"idle" | "checking" | "authenticated" | "unauthenticated"`.
-  - `loginStatus`: `"idle" | "loading" | "succeeded" | "failed"`.
-  - `registerError`: erro da tentativa de cadastro.
-  - `loginError`: erro da tentativa de login.
+  - `authStatus`: `"checking" | "authenticated" | "unauthenticated"`.
+  - `logoutReason`: motivo de logout (quando aplicável).
+  - `registerStatus`: status do cadastro.
+  - `registerError`: erro do cadastro.
+  - `loginStatus`/`loginError`: previstos, mas o fluxo de login ainda está em desenvolvimento no código atual.
 
 - **Reducers**
-  - `logout`: limpa `token`, `user`, `authStatus = "unauthenticated"`, `loginStatus = "idle"`.
+  - `logout`: limpa `token`, `user`, e seta `authStatus = "unauthenticated"`.
+  - `updateToken`: atualiza o access token (usado no refresh flow do `apiClient`).
   - `clearLoginError`: limpa `loginError`.
   - `clearRegisterError`: limpa `registerError`.
 
 - **ExtraReducers (thunks)**
-  - `loginThunk`:
-    - `pending` → inicia loading, limpa erros.
-    - `fulfilled` → armazena `token`, `user`, marca `authenticated`.
-    - `rejected` → marca `unauthenticated`, seta `loginError`.
   - `restoreSessionThunk`:
     - `pending` → `authStatus = "checking"`.
     - `fulfilled` → restaura `token`, `user`, marca `authenticated`.
@@ -176,44 +145,27 @@ O objetivo é permitir que o usuário:
 
 ### 4.3. Componentes e Páginas Relevantes
 
-- **`Login.jsx`**
-  - Formulário com `TextField` do MUI para email/senha.
-  - Integração com hook `useForm` para controle de estado e validação onBlur.
-  - Feedback de erro de login (`loginError`).
-  - Link para a rota de registro.
-
-- **`Register.jsx`**
-  - Formulário de cadastro com campos nome/email/senha/confirmar senha.
-  - Validação com `RegisterPayloadSchema` no serviço.
-  - Exibição de mensagens de erro de validação da API.
-
-- **`ProtectedRoute.jsx`**
-  - Wrapper que:
-    - Mostra `LoadingPage` enquanto a sessão é checada.
-    - Redireciona para `/login` se não autenticado.
-    - Renderiza as rotas filhas (`<Outlet />`) se autenticado.
-
-- **`DashboardPage.jsx`**
-  - Página inicial após login.
-  - Hoje: simples texto `"Autenticado"`, servindo como placeholder para futuras features (gráficos, listas de contas, transações, etc.).
-
-- **`Sidebar.jsx` e componentes de UI**
-  - `Sidebar.jsx`: componente para navegação lateral (pode ser usado em layout autenticado).
-  - `components/ui/Button.jsx`: abstração de botão customizado (pode ser conectado a MUI/Tailwind).
+- **`RegisterPage.jsx`**
+  - Formulário de cadastro com campos `name`, `email`, `password`, `passwordConfirmation`.
+  - Validação com Zod (`registerSchema`) e feedback via `Snackbar`.
+- **Layouts**
+  - `PublicLayout.jsx`: container centralizado para páginas públicas.
+  - `AuthenticatedLayout.jsx`: layout base para rotas privadas (placeholder).
+  - `LoadingPage.jsx`: layout exibido durante `authStatus = "checking"`.
 
 ### 4.4. Comportamento Esperado do Frontend
 
 - Sempre que o usuário abre a aplicação:
-  - O front tenta restaurar sessão com `/api/refresh`.
+  - O front tenta restaurar sessão com `POST http://localhost:3000/refresh` (cookie `refreshToken`).
   - Se houver refresh token válido:
     - Usuário é automaticamente autenticado e redirecionado para `/`.
   - Se não houver:
-    - Usuário é enviado para `/login`.
+    - O router público é ativado (no estado atual, a rota index renderiza o cadastro).
 
-- Ao logar ou se registrar:
+- Ao se registrar:
   - O token de acesso é guardado no Redux.
   - O refresh token fica em cookie HTTP-only, controlado pelo backend.
-  - `ProtectedRoute` garante que apenas usuários autenticados acessem rotas protegidas.
+  - O router privado é ativado após autenticação.
 
 ---
 
@@ -644,14 +596,14 @@ Isso garante:
 ## 6. Fluxo Completo Exemplo (Login e Acesso a Contas)
 
 1. Usuário acessa `http://localhost:5173/`.
-2. `AuthInitializer` chama `/api/refresh`:
+2. `AppInitializer` dispara `restoreSessionThunk`, que chama `POST http://localhost:3000/refresh`:
    - Se existir cookie de refresh válido → usuário autenticado, vai para `/`.
-   - Se não existir → `authStatus = "unauthenticated"`, `ProtectedRoute` redireciona para `/login`.
-3. Usuário faz login em `/login`:
-   - Front envia `POST /api/login` com email/senha.
-   - Backend valida dados, busca usuário, verifica senha, gera access token e refresh token.
+   - Se não existir → `authStatus = "unauthenticated"` e o `publicRouter` é ativado (no código atual, o index renderiza o cadastro).
+3. Usuário se registra em `/` (rota index pública no estado atual):
+   - Front envia `POST http://localhost:3000/register` com dados do usuário.
+   - Backend valida dados, cria usuário, gera access token e refresh token.
    - Backend responde com `{ user, token }` e seta cookie `refreshToken`.
-   - Front salva `token` e `user` no Redux e redireciona para `/`.
+   - Front salva `token` e `user` no Redux e ativa o router privado.
 4. Para acessar recursos protegidos (ex.: `/accounts`):
    - Front envia requisição ao backend com header `Authorization: Bearer <token>`.
    - Backend executa `setUserId`, valida token e seta `req.userId`.
@@ -667,7 +619,6 @@ Isso garante:
 - `MONGO_URI` – String de conexão com MongoDB.
 - `JWT_SECRET` – Segredo para assinar tokens de acesso.
 - `REFRESH_TOKEN_TTL_MS` – Tempo de vida do refresh token em milissegundos.
-- Possível `JWT_REFRESH_SECRET` ou similar (caso queira separar chaves).
 
 ### Frontend
 
@@ -675,7 +626,14 @@ Isso garante:
 
 ---
 
-## 8. Como Utilizar Esta Documentação em Word
+## 8. Pontos de atenção (WIP)
+
+- O frontend ainda não possui tela/fluxo de **login** implementado (rota `/login` existe como placeholder).
+- No backend, `authService.refreshSession` retorna `accessToken`, mas o controller responde `data.token` (padronizar para evitar `token` indefinido no refresh).
+- No cadastro via frontend, a chamada de `register()` não envia `credentials: "include"`; isso impede o browser de persistir o cookie `refreshToken` em cenário cross-origin.
+- O middleware `parseTransactionFilters` usa `safeParse`, mas não está populando `req.filters` com os filtros validados no formato esperado.
+
+## 9. Como Utilizar Esta Documentação em Word
 
 - Abra o arquivo `DOCUMENTACAO_PROJETO.md` no seu editor.
 - Copie todo o conteúdo.
