@@ -113,3 +113,18 @@ exports.deleteTransaction = async (id, userId) => {
 
   return await TransactionRepository.deleteById(id);
 };
+
+exports.getLastTransactions = async ({ userId, limit, type }) => {
+  const lookupObject = { limit };
+
+  if (type) {
+    lookupObject.type = type;
+  }
+
+  const limitedTransactions = await TransactionRepository.findByLimitAndType({
+    userId,
+    ...lookupObject,
+  });
+
+  return limitedTransactions;
+};

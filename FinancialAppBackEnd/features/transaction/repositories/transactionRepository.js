@@ -42,7 +42,18 @@ exports.findTransactions = async (userId, filters) => {
     query.type = filters.type;
   }
 
-  return await Transaction.find(query).sort({ date: -1 });
+  return await Transaction.find(query).sort({ createdAt: -1 });
+};
+
+//Função para buscar por limite de listagem e, se existir, tipo de transação
+exports.findByLimitAndType = async ({userId, limit, type}) => {
+  const query = { userId };
+
+  if (type) {
+    query.type = type;
+  }
+
+  return await Transaction.find(query).sort({ createdAt: -1 }).limit(limit);
 };
 
 //Função para atualizar uma transação
