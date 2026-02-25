@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-import { register, refresh } from "./authService";
+import { register, refresh, login } from "./authService";
 
 export const restoreSessionThunk = createAsyncThunk("auth/restoreSessionThunk", async (payload, thunkApi) => {
   try {
@@ -9,10 +9,7 @@ export const restoreSessionThunk = createAsyncThunk("auth/restoreSessionThunk", 
     return refreshSession;
   } catch (err) {
     if (err instanceof TypeError) {
-      return thunkApi.rejectWithValue({ silent: true, message: "Não foi possível se conectar ao servidor" });
-    }
-    if (err.type !== "HTTP_ERROR") {
-      return thunkApi.rejectWithValue({ silent: true, message: err.message });
+      return thunkApi.rejectWithValue({ message: "Não foi possível se conectar ao servidor" });
     }
 
     return thunkApi.rejectWithValue({ message: err.message });
@@ -25,12 +22,22 @@ export const registerThunk = createAsyncThunk("auth/registerThunk", async (paylo
 
     return registerData;
   } catch (err) {
-    console.log(err);
     if (err instanceof TypeError) {
-      return thunkApi.rejectWithValue({ silent: true, message: "Não foi possível se conectar ao servidor" });
+      return thunkApi.rejectWithValue({ message: "Não foi possível se conectar ao servidor" });
     }
-    if (err.type !== "HTTP_ERROR") {
-      return thunkApi.rejectWithValue({ silent: true, message: err.message });
+
+    return thunkApi.rejectWithValue({ message: err.message });
+  }
+});
+
+export const loginThunk = createAsyncThunk("auth/loginThunk", async (payload, thunkApi) => {
+  try {
+    const loginData = await login(payload);
+
+    return loginData;
+  } catch (err) {
+    if (err instanceof TypeError) {
+      return thunkApi.rejectWithValue({ message: "Não foi possível se conectar ao servidor" });
     }
 
     return thunkApi.rejectWithValue({ message: err.message });

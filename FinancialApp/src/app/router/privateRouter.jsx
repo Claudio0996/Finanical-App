@@ -7,7 +7,7 @@ const privateRouter = createBrowserRouter([
     path: "/",
     element: <AuthenticatedLayout />,
     children: [
-      { index: true },
+      { index: true, element: <DashboardPage /> },
       { path: "transactions" },
       { path: "accounts" },
       { path: "categories" },

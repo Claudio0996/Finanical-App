@@ -48,6 +48,7 @@ exports.loginUser = async (req, res, next) => {
 };
 
 exports.refreshSession = async (req, res, next) => {
+  console.log(req);
   try {
     const oldRefreshToken = req.cookies.refreshToken;
 

@@ -228,7 +228,7 @@ export default function RegisterPage() {
       </form>
       <div className="w-full text-center">
         <p className="text-[#111827]">
-          Já tem uma conta? <Link to="/login">Entre aqui.</Link>
+          Já tem uma conta? <Link to="/">Entre aqui.</Link>
         </p>
       </div>
 

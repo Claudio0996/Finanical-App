@@ -1,4 +1,5 @@
 import registerSchema from "./registerSchema";
+import loginSchema from "./loginSchema";
 
 export const refresh = async () => {
   const response = await fetch("http://localhost:3000/refresh", {
@@ -7,20 +8,15 @@ export const refresh = async () => {
   });
 
   if (!response.ok) {
+    const error = await response.json();
     throw {
       type: "HTTP_ERROR",
-      message: "Não foi possível fazer a requisição. Tente novamente mais tarde!",
+      status: response.status,
+      message: error.message,
     };
   }
 
   const resData = await response.json();
-
-  if (!resData.success) {
-    throw {
-      type: "AUTH_ERROR",
-      message: resData.message,
-    };
-  }
 
   return resData;
 };
@@ -39,6 +35,7 @@ export const register = async (payload) => {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     method: "POST",
     body: JSON.stringify(payloadValidated.data),
   });
@@ -46,7 +43,7 @@ export const register = async (payload) => {
   if (!response.ok) {
     const error = await response.json();
     throw {
-      type: "VALIDATION_ERROR",
+      type: "HTTP_ERROR",
       status: response.status,
       message: error.message,
     };
@@ -54,12 +51,37 @@ export const register = async (payload) => {
 
   const formattedData = await response.json();
 
-  if (!formattedData.success) {
+  return formattedData.data;
+};
+
+export const login = async (payload) => {
+  const payloadValidation = loginSchema.safeParse(payload);
+
+  if (!payloadValidation.success) {
     throw {
-      type: "AUTH_ERROR",
-      message: formattedData.message,
+      type: "VALIDATION_ERROR",
+      message: "Dados recebidos do formulário inválidos",
     };
   }
+
+  const response = await fetch("http://localhost:3000/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payloadValidation.data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw {
+      type: "HTTP_ERROR",
+      status: response.status,
+      message: error.message,
+    };
+  }
+
+  const formattedData = await response.json();
 
   return formattedData.data;
 };

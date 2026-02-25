@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { registerThunk, restoreSessionThunk } from "./authThunks";
+import { registerThunk, restoreSessionThunk, loginThunk } from "./authThunks";
 
 const initialState = {
   authStatus: "checking",
@@ -47,6 +47,7 @@ const authSlice = createSlice({
     });
 
     builder.addCase(loginThunk.rejected, (state, action) => {
+      console.log(action.payload);
       state.authStatus = "unauthenticated";
       state.loginError = action.payload.message;
       state.loginStatus = "error";
